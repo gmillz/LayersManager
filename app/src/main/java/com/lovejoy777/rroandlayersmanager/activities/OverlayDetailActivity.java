@@ -262,6 +262,7 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
         installAllStyle = (Switch) cordLayout.findViewById(R.id.Tv_Category2Name);
 
 
+
         //Hide the FAB
         installationFAB = (android.support.design.widget.FloatingActionButton) cordLayout.findViewById(R.id.fab2);
         installationFAB.hide();

@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class Layer implements Closeable {
+public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     private static final String ACTION_PICK_PLUGIN = "com.layers.plugins.PICK_OVERLAYS";
 
     private final String name;

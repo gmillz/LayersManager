@@ -6,7 +6,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        applicationId "com.lovejoy777.rroandlayersmanager"
+        applicationId "com.gmillz.layersmanager"
         minSdkVersion 21
         targetSdkVersion 23
         versionCode 36
@@ -51,6 +51,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt')
             signingConfig signingConfigs.release
         }
+    }
+
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'LICENSE.txt'
     }
 
 }
