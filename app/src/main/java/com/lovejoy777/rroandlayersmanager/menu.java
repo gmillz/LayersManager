@@ -8,7 +8,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,24 +19,26 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.bitsyko.libicons.IconPack;
-import com.bitsyko.libicons.SystemApplicationHelper;
 import com.bitsyko.liblayers.Layer;
-import com.lovejoy777.rroandlayersmanager.activities.*;
+import com.lovejoy777.rroandlayersmanager.activities.AboutActivity;
+import com.lovejoy777.rroandlayersmanager.activities.DetailedTutorialActivity;
+import com.lovejoy777.rroandlayersmanager.activities.IconPackDetailActivity;
+import com.lovejoy777.rroandlayersmanager.activities.OverlayDetailActivity;
+import com.lovejoy777.rroandlayersmanager.activities.SettingsActivity;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
-import com.lovejoy777.rroandlayersmanager.fragments.*;
+import com.lovejoy777.rroandlayersmanager.fragments.BackupRestoreFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.InstallFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.PluginFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.UninstallFragment;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 import com.rubengees.introduction.IntroductionActivity;
 import com.rubengees.introduction.IntroductionBuilder;
 import com.rubengees.introduction.entity.Option;
 import com.rubengees.introduction.entity.Slide;
-import com.stericson.RootTools.RootTools;
-import com.stericson.RootTools.exceptions.RootDeniedException;
-import com.stericson.RootTools.execution.CommandCapture;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,8 +48,13 @@ import java.util.concurrent.TimeoutException;
 
 public class menu extends AppCompatActivity {
 
-    private DrawerLayout mDrawerLayout;
+    public static final String PLAY_SHOWCASE_URI =
+            "http://play.google.com/store/apps/details?id=com.lovejoy777.showcase";
+    public static final String PLAY_LAYERS_THEMES_URI =
+            "https://play.google.com/store/search?q=Layers+Theme&c=" +
+                    "apps&docType=1&sp=CAFiDgoMTGF5ZXJzIFRoZW1legIYAIoBAggB:S:ANO1ljK_ZAY";
 
+    private DrawerLayout mDrawerLayout;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,16 +64,17 @@ public class menu extends AppCompatActivity {
 
         loadToolbarNavDrawer();
 
-        if (!RootTools.isAccessGiven()) {
+        if (Utils.isRootAccessAvailable()) {
             Toast.makeText(this, getString(R.string.noRoot), Toast.LENGTH_LONG).show();
         } else {
             createImportantDirectories();
         }
 
-        Boolean tutorialShown = PreferenceManager.getDefaultSharedPreferences(menu.this).getBoolean("tutorialShown", false);
+        Boolean tutorialShown = PreferenceManager.getDefaultSharedPreferences(menu.this)
+                .getBoolean("tutorialShown", false);
         if (!tutorialShown) {
             loadTutorial(this);
-        }else{
+        } else {
             changeFragment(1);
         }
     }
@@ -79,28 +86,47 @@ public class menu extends AppCompatActivity {
     public static List<Slide> generateSlides() {
         List<Slide> slides = new ArrayList<>();
 
-        slides.add(new Slide().withTitle(R.string.Slide1_Heading).withDescription(R.string.Slide1_Text).
-                withColorResource(R.color.tutorial_background_1).withImage(R.drawable.layersmanager));
-        slides.add(new Slide().withTitle(R.string.Slide2_Heading).withDescription(R.string.Slide2_Text)
-                .withColorResource(R.color.tutorial_background_2).withImage(R.drawable.intro_2));
-        slides.add(new Slide().withTitle(R.string.Slide3_Heading).withDescription(R.string.Slide3_Text)
-                .withColorResource(R.color.tutorial_background_3).withImage(R.drawable.intro_3));
-        slides.add(new Slide().withTitle(R.string.Slide4_Heading).withDescription(R.string.Slide4_Text)
-                .withColorResource(R.color.tutorial_background_4).withImage(R.drawable.intro_4));
-        slides.add(new Slide().withTitle(R.string.Slide5_Heading).withDescription(R.string.Slide5_Text)
-                .withColorResource(R.color.tutorial_background_5).withImage(R.drawable.intro_5));
-        slides.add(new Slide().withTitle(R.string.Slide6_Heading).withOption(new Option(R.string.SettingLauncherIconDetail))
-                .withColorResource(R.color.tutorial_background_6).withImage(R.drawable.layersmanager_crossed));
-        slides.add(new Slide().withTitle(R.string.Slide7_Heading).withOption(new Option(R.string.SettingsHideOverlays))
-                .withColorResource(R.color.tutorial_background_6).withImage(R.drawable.intro_7));
+        slides.add(new Slide()
+                .withTitle(R.string.Slide1_Heading)
+                .withDescription(R.string.Slide1_Text)
+                .withColorResource(R.color.tutorial_background_1)
+                .withImage(R.drawable.layersmanager));
+        slides.add(new Slide()
+                .withTitle(R.string.Slide2_Heading)
+                .withDescription(R.string.Slide2_Text)
+                .withColorResource(R.color.tutorial_background_2)
+                .withImage(R.drawable.intro_2));
+        slides.add(new Slide()
+                .withTitle(R.string.Slide3_Heading)
+                .withDescription(R.string.Slide3_Text)
+                .withColorResource(R.color.tutorial_background_3)
+                .withImage(R.drawable.intro_3));
+        slides.add(new Slide()
+                .withTitle(R.string.Slide4_Heading)
+                .withDescription(R.string.Slide4_Text)
+                .withColorResource(R.color.tutorial_background_4)
+                .withImage(R.drawable.intro_4));
+        slides.add(new Slide()
+                .withTitle(R.string.Slide5_Heading)
+                .withDescription(R.string.Slide5_Text)
+                .withColorResource(R.color.tutorial_background_5)
+                .withImage(R.drawable.intro_5));
+        slides.add(new Slide()
+                .withTitle(R.string.Slide6_Heading)
+                .withOption(new Option(R.string.SettingLauncherIconDetail))
+                .withColorResource(R.color.tutorial_background_6)
+                .withImage(R.drawable.layersmanager_crossed));
+        slides.add(new Slide()
+                .withTitle(R.string.Slide7_Heading)
+                .withOption(new Option(R.string.SettingsHideOverlays))
+                .withColorResource(R.color.tutorial_background_6)
+                .withImage(R.drawable.intro_7));
         return slides;
     }
 
-    private ViewPagerAdapter adapter;
-
     private void setupViewPager(ViewPager viewPager, int mode) {
         viewPager.removeAllViews();
-        adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
         if (mode == 0) {
 
             PluginFragment overlayFragment = new PluginFragment();
@@ -114,11 +140,8 @@ public class menu extends AppCompatActivity {
             overlayFragment.setArguments(args1);
             iconFragment.setArguments(args2);
 
-
             adapter.addFrag(overlayFragment, "Overlays");
             adapter.addFrag(iconFragment, "Icon Overlays");
-
-
         } else {
             System.out.println("TEST");
             adapter.removeAllFrags();
@@ -135,13 +158,9 @@ public class menu extends AppCompatActivity {
             uninstallOverlays2.setArguments(args2);
             adapter.addFrag(uninstallOverlays2, "Icon Overlays");
             //adapter.addFrag(new UninstallFragment(), "Icon Overlays");
-
         }
-
-
         viewPager.setAdapter(adapter);
     }
-
 
     class ViewPagerAdapter extends FragmentStatePagerAdapter {
         private final List<android.support.v4.app.Fragment> mFragmentList = new ArrayList<>();
@@ -182,38 +201,38 @@ public class menu extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == IntroductionBuilder.INTRODUCTION_REQUEST_CODE &&
                 resultCode == RESULT_OK) {
-
-            for (Option option : data.<Option>getParcelableArrayListExtra(IntroductionActivity.
-                    OPTION_RESULT)) {
-
-                if (option.getPosition()==5 && option.isActivated()){
-                    SharedPreferences myprefs = getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("switch1",true).commit();
+            for (Option option : data.<Option>getParcelableArrayListExtra(
+                    IntroductionActivity.OPTION_RESULT)) {
+                if (option.getPosition() == 5 && option.isActivated()){
+                    SharedPreferences myprefs =
+                            getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
+                    myprefs.edit().putBoolean("switch1",true).apply();
                     Commands.killLauncherIcon(this);
+                } else if (option.getPosition() == 6 && option.isActivated()){
+                    SharedPreferences myprefs =
+                            getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
+                    myprefs.edit().putBoolean("disableNotInstalledApps",true).apply();
                 }
-                if (option.getPosition()==6 && option.isActivated()){
-                    SharedPreferences myprefs = getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("disableNotInstalledApps",true).commit();
-                }
-                PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean("tutorialShown", true).commit();
+                PreferenceManager.getDefaultSharedPreferences(this).edit()
+                        .putBoolean("tutorialShown", true).apply();
                 changeFragment(1);
-
             }
-        }else{
-            if (resultCode == RESULT_CANCELED){
+        } else {
+            if (resultCode == RESULT_CANCELED) {
                 loadTutorial(this);
             }
         }
-
     }
 
     private void loadToolbarNavDrawer() {
         //set Toolbar
-        final android.support.v7.widget.Toolbar toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
+        final android.support.v7.widget.Toolbar toolbar =
+                (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_action_menu);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_action_menu);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         //set NavigationDrawer
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -223,13 +242,13 @@ public class menu extends AppCompatActivity {
         }
     }
 
-
     //navigationDrawerIcon Onclick
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                Fragment currentFragment = menu.this.getFragmentManager().findFragmentById(R.id.fragment_container);
+                Fragment currentFragment =
+                        menu.this.getFragmentManager().findFragmentById(R.id.fragment_container);
                 if (currentFragment instanceof InstallFragment) {
                     changeFragment(1);
                 } else {
@@ -240,7 +259,6 @@ public class menu extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
     //set NavigationDrawerContent
     private void setupDrawerContent(NavigationView navigationView) {
         navigationView.setNavigationItemSelectedListener(
@@ -249,7 +267,8 @@ public class menu extends AppCompatActivity {
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
                         mDrawerLayout.closeDrawers();
                         Bundle bndlanimation =
-                                ActivityOptions.makeCustomAnimation(getApplicationContext(), R.anim.anni1, R.anim.anni2).toBundle();
+                                ActivityOptions.makeCustomAnimation(getApplicationContext(),
+                                        R.anim.anni1, R.anim.anni2).toBundle();
                         int id = menuItem.getItemId();
                         switch (id) {
                             //Home
@@ -269,25 +288,34 @@ public class menu extends AppCompatActivity {
                                 break;
                             //Showcase
                             case R.id.nav_showcase:
-                                boolean installed = Commands.appInstalledOrNot(menu.this,"com.lovejoy777.showcase");
+                                boolean installed = Commands.appInstalledOrNot(
+                                        menu.this, "com.lovejoy777.showcase");
                                 if (installed) {
-                                    //This intent will help you to launch if the package is already installed
+                                    // This intent will help you
+                                    // to launch if the package is already installed
                                     Intent intent = new Intent();
-                                    intent.setComponent(new ComponentName("com.lovejoy777.showcase", "com.lovejoy777.showcase.MainActivity1"));
+                                    intent.setComponent(new ComponentName(
+                                            "com.lovejoy777.showcase",
+                                            "com.lovejoy777.showcase.MainActivity1"));
                                     startActivity(intent);
                                     break;
                                 } else {
-                                    Toast.makeText(menu.this, "Please install the layers showcase plugin", Toast.LENGTH_LONG).show();
-                                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=com.lovejoy777.showcase")), bndlanimation);
+                                    Toast.makeText(menu.this,
+                                            "Please install the layers showcase plugin",
+                                            Toast.LENGTH_LONG).show();
+                                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(
+                                            PLAY_SHOWCASE_URI)), bndlanimation);
                                     break;
                                 }
                             //PlayStore
                             case R.id.nav_playStore:
-                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=Layers+Theme&c=apps&docType=1&sp=CAFiDgoMTGF5ZXJzIFRoZW1legIYAIoBAggB:S:ANO1ljK_ZAY")), bndlanimation);
+                                startActivity(new Intent(Intent.ACTION_VIEW,
+                                        Uri.parse(PLAY_LAYERS_THEMES_URI)), bndlanimation);
                                 break;
                             //Tutorial
                             case R.id.nav_tutorial:
-                                Intent tutorial = new Intent(menu.this, DetailedTutorialActivity.class);
+                                Intent tutorial = new Intent(
+                                        menu.this, DetailedTutorialActivity.class);
                                 startActivity(tutorial, bndlanimation);
                                 break;
                             //About
@@ -307,11 +335,14 @@ public class menu extends AppCompatActivity {
     }
 
     public void changeFragment(int position) {
-        android.support.v7.widget.Toolbar toolbar = (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
+        android.support.v7.widget.Toolbar toolbar =
+                (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
         Fragment fragment = null;
         FragmentManager fragmentManager = getFragmentManager();
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("");
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("");
+        }
         ViewPager viewPager = (ViewPager) findViewById(R.id.tabanim_viewpager);
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         switch (position) {
@@ -340,7 +371,8 @@ public class menu extends AppCompatActivity {
                     .addToBackStack(null)
                     .commit();
         } else {
-            android.support.v4.app.Fragment test = getSupportFragmentManager().findFragmentByTag("TAG");
+            android.support.v4.app.Fragment test =
+                    getSupportFragmentManager().findFragmentByTag("TAG");
             if (test != null) {
                 fragmentManager
                         .beginTransaction()
@@ -353,13 +385,14 @@ public class menu extends AppCompatActivity {
     public void openOverlayDetailActivity(Layer layer) {
         Bundle args = new Bundle();
         args.putString("PackageName", layer.getPackageName());
+        args.putBoolean("CMTETheme", layer.isCMTETheme);
 
         Intent intent = new Intent(this, OverlayDetailActivity.class);
 
         intent.putExtra("PackageName", layer.getPackageName());
+        intent.putExtra("CMTETheme", layer.isCMTETheme);
 
         startActivity(intent);
-
     }
 
     public void openIconPackDetailActivity(IconPack iconPack) {
@@ -371,46 +404,29 @@ public class menu extends AppCompatActivity {
         intent.putExtra("PackageName", iconPack.getPackageName());
 
         startActivity(intent);
-
     }
 
-
-
-
-
     private void createImportantDirectories() {
-
-
         String sdOverlays1 = Environment.getExternalStorageDirectory() + "/Overlays/Backup";
         // CREATES /SDCARD/OVERLAYS/BACKUP
         File dir1 = new File(sdOverlays1);
 
         dir1.mkdirs();
 
-        Commands.remountSystem("rw");
+        Utils.remount("rw");
         String vendover = DeviceSingleton.getInstance().getOverlayFolder();
         // CREATES /VENDOR/OVERLAY
         File dir2 = new File(vendover);
         if (!dir2.exists()) {
-            CommandCapture command5 = new CommandCapture(0, "mkdir " + vendover);
-            try {
-                RootTools.getShell(true).add(command5);
-                while (!command5.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-            } catch (IOException | TimeoutException | InterruptedException | RootDeniedException e) {
-                e.printStackTrace();
-            }
+            Utils.createFolder(dir2);
         }
-
-        Commands.remountSystem("ro");
-
+        Utils.remount("ro");
     }
 
     @Override
     public void onBackPressed() {
-        Fragment currentFragment = menu.this.getFragmentManager().findFragmentById(R.id.fragment_container);
+        Fragment currentFragment =
+                menu.this.getFragmentManager().findFragmentById(R.id.fragment_container);
 
         if (mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
             mDrawerLayout.closeDrawers();
@@ -420,20 +436,6 @@ public class menu extends AppCompatActivity {
         if (currentFragment instanceof InstallFragment) {
             changeFragment(1);
         }
-
-        //if (currentFragment instanceof BackButtonListener && !((BackButtonListener) currentFragment).onBackButton()) {
-        //    return;
-        //}
-
-        FragmentManager fm = getFragmentManager();
-
-        //First commit is omitted
-        //if (fm.getBackStackEntryCount() > 1) {
-        //    fm.popBackStack();
-        //    return;
-        //}
-
-
         super.onBackPressed();
     }
 }

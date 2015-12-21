@@ -17,9 +17,7 @@ import com.bitsyko.libicons.AppIcon;
 import com.lovejoy777.rroandlayersmanager.AsyncResponse;
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.R;
-import com.stericson.RootTools.RootTools;
-import com.stericson.RootTools.exceptions.RootDeniedException;
-import com.stericson.RootTools.execution.CommandCapture;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,17 +35,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 
 public class Commands {
-
-    //No instances
-    private Commands() {
-    }
 
     public static ArrayList<String> loadFiles(String directory) {
 
@@ -68,7 +61,6 @@ public class Commands {
     }
 
     public static ArrayList<String> loadFolders(String directory) {
-
         File f = new File(directory);
         ArrayList<String> folders = new ArrayList<>();
 
@@ -102,7 +94,7 @@ public class Commands {
             public void onClick(DialogInterface dialog, int which) {
                 try {
                     Runtime.getRuntime()
-                            .exec(new String[]{"su", "-c", "busybox killall system_server"});
+                            .exec(new String[]{"su", "-c", "am restart"});
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -114,7 +106,6 @@ public class Commands {
 
 
     public static ArrayList<String> fileNamesFromZip(File zip) throws IOException {
-
         ArrayList<String> files = new ArrayList<>();
 
         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(zip)));
@@ -125,9 +116,7 @@ public class Commands {
         }
 
         return files;
-
     }
-
 
     public static class InstallZipBetterWay extends AsyncTask<String, Void, Void> {
 
@@ -148,7 +137,6 @@ public class Commands {
 
         @Override
         protected Void doInBackground(String... files) {
-
             String tempDir = context.getCacheDir().getAbsolutePath() + File.separator + "zipCache/";
 
             try {
@@ -163,31 +151,24 @@ public class Commands {
                 }
             }
 
-
             for (String file : files) {
-
                 if (file.endsWith(".zip")) {
-
                     Log.d("Extracting", file);
-
                     try {
-
-                        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
+                        ZipInputStream zis = new ZipInputStream(
+                                new BufferedInputStream(new FileInputStream(file)));
                         ZipEntry ze;
                         ZipFile zipFile = new ZipFile(file);
 
                         while ((ze = zis.getNextEntry()) != null) {
-                            FileUtils.copyInputStreamToFile(zipFile.getInputStream(ze), new File(tempDir + ze.getName()));
+                            FileUtils.copyInputStreamToFile(
+                                    zipFile.getInputStream(ze), new File(tempDir + ze.getName()));
                         }
-
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.e("Extracting failed", file);
                     }
-
-
                 } else if (file.endsWith(".apk")) {
-
                     Log.d("Copying", file);
 
                     File apkFile = new File(file);
@@ -198,42 +179,11 @@ public class Commands {
                         e.printStackTrace();
                         Log.e("Copying failed", file);
                     }
-
                 }
-
-
             }
-
-
-            remountSystem("rw");
-
-            RootCommands.moveRoot(tempDir + "*", DeviceSingleton.getInstance().getOverlayFolder() + "/");
-
-            try {
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER & FILES TO 644 RECURING
-                CommandCapture command9 = new CommandCapture(0, "chmod -R 644 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command9);
-                while (!command9.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 755 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-                remountSystem("ro");
-                // CLOSE ALL SHELLS
-                RootTools.closeAllShells();
-
-            } catch (IOException | RootDeniedException | TimeoutException | InterruptedException e) {
-                e.printStackTrace();
-            }
-
-
+            Utils.moveFile(tempDir + "*", DeviceSingleton.getInstance().getOverlayFolder() + "/");
+            Utils.applyPermissions(
+                    new File(DeviceSingleton.getInstance().getOverlayFolder()), "644");
             return null;
         }
 
@@ -317,18 +267,18 @@ public class Commands {
 
         @Override
         protected Void doInBackground(Void... params) {
-            remountSystem("rw");
+            Utils.remount("rw");
             for (String path : paths) {
                 Log.d("Removing: ", path);
                 try {
-                    RootTools.deleteFileOrDirectory(RootCommands.getCommandLineString(path), false);
+                    Utils.deleteFile(path);
                 } catch (Exception e) {
                     Log.w("Cannot remove: ", path);
                     e.printStackTrace();
                 }
                 publishProgress();
             }
-            remountSystem("ro");
+            Utils.remount("ro");
             return null;
         }
 
@@ -373,23 +323,15 @@ public class Commands {
 
         @Override
         protected Void doInBackground(Void... params) {
-
-            // MOUNT /SYSTEM RW
-            remountSystem("rw");
-
             for (LayerFile layerFile : layersToInstall) {
                 try {
-
-                    String filelocation = RootCommands.getCommandLineString(layerFile.getFile(context).getAbsolutePath());
-
-                    RootCommands.moveRoot(filelocation, DeviceSingleton.getInstance().getOverlayFolder() + "/");
-
+                    Utils.moveFile(layerFile.getFile(context).getAbsolutePath(),
+                            DeviceSingleton.getInstance().getOverlayFolder() + "/");
                     publishProgress();
                 } catch (Exception e) {
                     e.printStackTrace();
                     publishProgress(e.getMessage());
                 }
-
             }
 
             if (!layersToInstall.isEmpty()) {
@@ -399,32 +341,8 @@ public class Commands {
                     e.printStackTrace();
                 }
             }
-
-            try {
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER & FILES TO 644 RECURING
-                CommandCapture command9 = new CommandCapture(0, "chmod -R 644 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command9);
-                while (!command9.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 755 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-                remountSystem("ro");
-
-                // CLOSE ALL SHELLS
-                RootTools.closeAllShells();
-
-            } catch (IOException | RootDeniedException | TimeoutException | InterruptedException e) {
-                e.printStackTrace();
-            }
-
+            Utils.applyPermissions(
+                    new File(DeviceSingleton.getInstance().getOverlayFolder()), "644");
             return null;
         }
 
@@ -448,8 +366,8 @@ public class Commands {
 
     private static final String[] aaptUrls = {
             "https://www.dropbox.com/s/au7ccu1gtroqvzt/aapt_x86?dl=1",
-            "https://www.dropbox.com/s/5x2fpgw6ojyao2d/aapt_arm?dl=1"};
-
+            "https://www.dropbox.com/s/5x2fpgw6ojyao2d/aapt_arm?dl=1"
+    };
 
     public static class InstallIcons extends AsyncTask<Void, String, Void> {
 
@@ -487,7 +405,6 @@ public class Commands {
 
         @Override
         protected Void doInBackground(Void... params) {
-
             try {
                 FileUtils.deleteDirectory(new File(context.getCacheDir() + "/tempFolder/"));
             } catch (IOException e) {
@@ -498,9 +415,7 @@ public class Commands {
             File appt = new File(context.getCacheDir() + "/aapt");
 
             if (!appt.exists()) {
-
                 for (String url : aaptUrls) {
-
                     try {
                         FileUtils.copyURLToFile(new URL(url), appt);
 
@@ -516,34 +431,18 @@ public class Commands {
                             Log.d("AAPT", data);
                             break;
                         }
-
-
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
-
-
                 }
-
             }
-
-
-            try {
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 700 " + appt.getAbsolutePath());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+            Utils.applyPermissions(appt.getAbsoluteFile(), "700");
 
             for (AppIcon app : list) {
                 Log.d("Installing", app.getPackageName());
                 try {
                     app.install();
+                    app.overlay.install();
                     publishProgress();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -551,49 +450,7 @@ public class Commands {
                 }
             }
 
-
             Log.d("Icon", "Moving");
-
-         //   RootTools.remount(DeviceSingleton.getInstance().getMountFolder(), "RW");
-
-            remountSystem("rw");
-
-            try {
-
-
-                CommandCapture command3 = new CommandCapture(0, "mv -f " + context.getCacheDir() + "/tempFolder/signed*" + " " + DeviceSingleton.getInstance().getOverlayFolder());
-
-                RootTools.getShell(true).add(command3);
-                while (!command3.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER & FILES TO 644 RECURING
-                CommandCapture command9 = new CommandCapture(0, "chmod -R 644 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command9);
-                while (!command9.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 755 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                RootTools.closeAllShells();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            remountSystem("rw");
-
-
             return null;
         }
 
@@ -605,32 +462,33 @@ public class Commands {
         }
     }
 
-
     public static int getSortMode(Activity context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getInt("sortMode", 1);
     }
 
     public static void setSortMode(Activity context, int mode) {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("sortMode", mode).commit();
+        PreferenceManager
+                .getDefaultSharedPreferences(context).edit().putInt("sortMode", mode).apply();
     }
 
-
     public static void killLauncherIcon(Context context) {
-
         PackageManager p = context.getPackageManager();
-        ComponentName componentName = new ComponentName(context, com.lovejoy777.rroandlayersmanager.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
-        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        // activity which is first time open in manifiest
+        // file which is declare as <category android:name="android.intent.category.LAUNCHER" />
+        ComponentName componentName = new ComponentName(
+                context, com.lovejoy777.rroandlayersmanager.MainActivity.class);
+        p.setComponentEnabledSetting(componentName,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         Toast.makeText(context, context.getResources().getString(R.string.launcherIconRemoved), Toast.LENGTH_SHORT).show();
-
     }
 
     public static void ReviveLauncherIcon(Context context) {
-
         PackageManager p = context.getPackageManager();
-        ComponentName componentName = new ComponentName(context, com.lovejoy777.rroandlayersmanager.MainActivity.class);
-        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        ComponentName componentName = new ComponentName(
+                context, com.lovejoy777.rroandlayersmanager.MainActivity.class);
+        p.setComponentEnabledSetting(componentName,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
         Toast.makeText(context, context.getResources().getString(R.string.launcherIconRevived), Toast.LENGTH_SHORT).show();
-
     }
 
    public static boolean appInstalledOrNot(Context context, String uri) {
@@ -644,5 +502,4 @@ public class Commands {
         }
         return app_installed;
     }
-
 }

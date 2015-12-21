@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import com.stericson.RootTools.RootTools;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 public class MainActivity extends Activity {
 
@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (!RootTools.isAccessGiven()) {
+        if (Utils.isRootAccessAvailable()) {
             Toast.makeText(MainActivity.this, R.string.noRoot, Toast.LENGTH_LONG).show();
         }
 
@@ -23,6 +23,5 @@ public class MainActivity extends Activity {
         startActivity(intent);
         overridePendingTransition(0, 0);
         finish();
-
     }
 }

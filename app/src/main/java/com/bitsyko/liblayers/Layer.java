@@ -9,26 +9,32 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.ArrayMap;
+import android.util.Log;
 import android.util.Pair;
 
+import com.bitsyko.liblayers.layerfiles.CMTEOverlay;
 import com.bitsyko.liblayers.layerfiles.ColorOverlay;
 import com.bitsyko.liblayers.layerfiles.CustomStyleOverlay;
 import com.bitsyko.liblayers.layerfiles.GeneralOverlay;
 import com.bitsyko.liblayers.layerfiles.LayerFile;
-import com.lovejoy777.rroandlayersmanager.commands.RootCommands;
+import com.lovejoy777.rroandlayersmanager.helper.AndroidXMLDecompress;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,11 +42,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     private static final String ACTION_PICK_PLUGIN = "com.layers.plugins.PICK_OVERLAYS";
+
+    // Theme asset paths
+    private static final String COMMON_FOLDER = "overlays/common";
 
     private final String name;
     private final String packageName;
@@ -50,9 +61,11 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     private final ApplicationInfo applicationInfo;
     private final Resources resources;
     private final Context context;
+    private Context layerContext = null;
     private List<Color> colors = new ArrayList<>();
     private String generalZip;
     private List<LayerFile> layers;
+    public boolean isCMTETheme;
 
     //Map for unpacked zipfiles from layer
     private Map<String, ZipFile> zipFileMap = new ArrayMap<>();
@@ -60,20 +73,26 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     private final Drawable icon;
 
     public Layer(String name, String developer, Drawable icon) {
-        this(name, developer, icon, null, null, null, null);
+        this(name, developer, icon, null, null, null, null, false);
     }
 
     private Layer(String name, String developer, Drawable icon, String packageName,
-                  Resources resources, ApplicationInfo applicationInfo, Context context) {
+                  Resources resources, ApplicationInfo applicationInfo, Context context, boolean isCMTETheme) {
         this.name = name;
         this.developer = developer;
         this.icon = icon;
         this.packageName = packageName;
         this.resources = resources;
         this.applicationInfo = applicationInfo;
+        this.isCMTETheme = isCMTETheme;
 
         if (context != null) {
             this.context = context.getApplicationContext();
+            try {
+                layerContext = this.context.createPackageContext(packageName, 0);
+            } catch (PackageManager.NameNotFoundException e) {
+                // ignore
+            }
         } else {
             this.context = null;
         }
@@ -98,7 +117,30 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
 
         Drawable icon = resources.getDrawable(iconID, null);
 
-        return new Layer(name, developer, icon, packageName, resources, applicationInfo, context);
+        return new Layer(name, developer, icon, packageName, resources, applicationInfo, context, false);
+    }
+
+    public static Layer layerFromCMTETheme(String packageName, Context context) {
+        Context themeContext;
+        try {
+            themeContext = context.createPackageContext(packageName, 0);
+
+            ApplicationInfo applicationInfo =
+                    context.getApplicationContext().getPackageManager()
+                            .getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+            CMPackageInfo packageInfo = getMetaData(context, applicationInfo);
+
+            if (themeContext != null) {
+                Drawable icon = context.getPackageManager().getApplicationIcon(packageName);
+
+
+                return new Layer(packageInfo.name, packageInfo.dev, icon,
+                        packageName, themeContext.getResources(), applicationInfo, context, true);
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // ignore
+        }
+        return null;
     }
 
     public static List<Layer> getLayersInSystem(Activity activity) {
@@ -108,8 +150,8 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
         PackageManager packageManager = activity.getPackageManager();
         Intent baseIntent = new Intent(ACTION_PICK_PLUGIN);
         baseIntent.setFlags(Intent.FLAG_DEBUG_LOG_RESOLUTION);
-        ArrayList<ResolveInfo> list = (ArrayList<ResolveInfo>) packageManager.queryIntentServices(baseIntent,
-                PackageManager.GET_RESOLVED_FILTER);
+        ArrayList<ResolveInfo> list = (ArrayList<ResolveInfo>)
+                packageManager.queryIntentServices(baseIntent, PackageManager.GET_RESOLVED_FILTER);
 
         for (ResolveInfo info : list) {
             ServiceInfo sinfo = info.serviceInfo;
@@ -122,7 +164,85 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
 
         }
 
+        getInstalledCMTEThemes(activity, layerList);
+
         return layerList;
+    }
+
+    private static class CMPackageInfo {
+        String name;
+        String dev;
+        boolean cmTheme;
+    }
+
+    private static final String CM_THEME_NAME_TAG = "org.cyanogenmod.theme.name";
+    private static final String CM_THEME_AUTHOR_TAG = "org.cyanogenmod.theme.author";
+
+    private static CMPackageInfo getMetaData(Context context, ApplicationInfo info) {
+        File file = new File(info.sourceDir);
+        CMPackageInfo packageInfo = new CMPackageInfo();
+        ZipFile zip;
+        InputStream manifestInputStream;
+        byte[] array;
+
+        try {
+            Context appContext = context.createPackageContext(info.packageName, 0);
+            zip = new ZipFile(file);
+            manifestInputStream = zip.getInputStream(zip.getEntry("AndroidManifest.xml"));
+            array = IOUtils.toByteArray(manifestInputStream);
+            String manifest = AndroidXMLDecompress.decompressXML(array);
+            Log.d("TEST", "test=\n" + manifest);
+            XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
+            parser.setInput(IOUtils.toInputStream(manifest), null);
+            while (parser.next() != XmlPullParser.END_DOCUMENT) {
+                String name = parser.getName();
+                if (name.equals("meta-data")) {
+                    int size = parser.getAttributeCount();
+                    for (int i = 0; i < size; i++) {
+                        String attrName = parser.getAttributeName(i);
+                        String attrValue = parser.getAttributeValue(i);
+                        if (attrName.equals("name")) {
+                            if (attrValue.equals(CM_THEME_NAME_TAG) || attrValue.equals(CM_THEME_AUTHOR_TAG)) {
+                                i++;
+                                String v = parser.getAttributeValue(i);
+                                if (attrValue.equals(CM_THEME_NAME_TAG)) {
+                                    packageInfo.name = appContext.getResources().getString(Integer.parseInt(v));
+                                } else if (attrValue.equals(CM_THEME_AUTHOR_TAG)) {
+                                    packageInfo.dev = appContext.getResources().getString(Integer.parseInt(v));
+                                }
+                                packageInfo.cmTheme = true;
+                                Log.d("TEST", "name=" + packageInfo.name + " : author=" + packageInfo.dev);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return packageInfo;
+    }
+
+    private static void getInstalledCMTEThemes(Context context, List<Layer> layers) {
+        PackageManager pm = context.getPackageManager();
+        List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+        for (ApplicationInfo info : apps) {
+            try {
+                Context appContext = context.createPackageContext(info.packageName, 0);
+                ApplicationInfo ai = appContext.getApplicationInfo();
+                CMPackageInfo packageInfo = getMetaData(context, info);
+                if (packageInfo.cmTheme) {
+                    Layer layer = layerFromCMTETheme(info.packageName, context);
+                    if (layer != null) layers.add(layer);
+                }
+                if (ai.metaData != null) {
+                    Log.d("TEST", "name=" + ai.metaData.getString("org.cyanogenmod.theme.name"));
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                // ignore
+            }
+        }
     }
 
     public String getVersionCode() {
@@ -244,17 +364,44 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
         if (promo == null) {
 
             int promoID = resources.getIdentifier("heroimage", "drawable", packageName);
-
-            promo = resources.getDrawable(promoID, null);
-
+            if (promoID != 0) {
+                promo = resources.getDrawable(promoID, null);
+            }
         }
-
-
         return promo;
     }
 
+    public List<LayerFile> getLayersInCMTETheme() {
+        List<LayerFile> layers = new ArrayList<>();
+        try {
+            AssetManager am = getAssetManager();
+            for (String name : am.list("overlays")) {
+                PackageManager pm = context.getPackageManager();
+                try {
+                    String n = pm.getApplicationLabel(pm.getApplicationInfo(name, 0)).toString();
+                    layers.add(new CMTEOverlay(context, this, n, name));
+                } catch (PackageManager.NameNotFoundException e) {
+                    // ignore
+                }
+                Log.d("TEST", "name=" + name);
+            }
+        } catch (IOException e) {
+            // ignore
+        }
+        return layers;
+    }
+
+    public String extractCommonResources() {
+        String dir = getCacheDir() + File.separator + packageName + File.separator + "common";
+        Utils.copyAssetFolder(getAssetManager(), COMMON_FOLDER, dir);
+        return dir + File.separator + "res" + File.separator + "values";
+    }
 
     public List<LayerFile> getLayersInPackage() {
+
+        if (isCMTETheme) {
+            return getLayersInCMTETheme();
+        }
 
         if (layers == null) {
 
@@ -373,7 +520,7 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     public int getPluginVersion() {
         int mPluginVersion = 2;
         Bundle bundle = applicationInfo.metaData;
-        if (bundle.containsKey("Layers_PluginVersion")) {
+        if (bundle != null && bundle.containsKey("Layers_PluginVersion")) {
             mPluginVersion = Integer.parseInt(bundle.getString("Layers_PluginVersion"));
         }
         return mPluginVersion;
@@ -388,11 +535,21 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     }
 
     public String getWhatsNew() {
-        return applicationInfo.metaData.getString("Layers_WhatsNew");
+        if (applicationInfo.metaData != null) {
+            return applicationInfo.metaData.getString("Layers_WhatsNew");
+        }
+        return null;
     }
 
     public String getDescription() {
-        return applicationInfo.metaData.getString("Layers_Description");
+        if (applicationInfo.metaData != null) {
+            return applicationInfo.metaData.getString("Layers_Description");
+        }
+        return null;
+    }
+
+    public AssetManager getAssetManager() {
+        return layerContext.getAssets();
     }
 
     public String getCacheDir() {
@@ -418,7 +575,8 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     @Override
     public void close() throws IOException {
         if (new File(getCacheDir() + File.separator + getName()).exists()) {
-            RootCommands.DeleteFileRoot(context.getCacheDir() + File.separator + StringUtils.deleteWhitespace(getName()));
+            Utils.deleteFile(context.getCacheDir()
+                    + File.separator + StringUtils.deleteWhitespace(getName()));
         }
 
         for (ZipFile zipFile : zipFileMap.values()) {
@@ -428,10 +586,7 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
         zipFileMap.clear();
     }
 
-
     public String getGeneralZip() {
         return generalZip;
     }
-
-
 }
