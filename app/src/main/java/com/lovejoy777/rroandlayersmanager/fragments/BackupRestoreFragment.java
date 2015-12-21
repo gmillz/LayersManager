@@ -37,8 +37,8 @@ import android.widget.Toast;
 
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.R;
-import com.lovejoy777.rroandlayersmanager.Utils;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
 
@@ -200,7 +200,6 @@ public class BackupRestoreFragment extends Fragment {
                         }
 
                 );
-
                 alert.setNegativeButton(android.R.string.cancel, null);
                 alert.show();
             }
@@ -417,7 +416,8 @@ public class BackupRestoreFragment extends Fragment {
         protected void onPostExecute(Void result) {
 
             progressBackup.dismiss();
-            CoordinatorLayout coordinatorLayoutView = (CoordinatorLayout) cordLayout.findViewById(R.id.main_content4);
+            CoordinatorLayout coordinatorLayoutView =
+                    (CoordinatorLayout) cordLayout.findViewById(R.id.main_content4);
             Snackbar.make(coordinatorLayoutView, R.string.backupComplete, Snackbar.LENGTH_LONG)
                     .show();
             new LoadAndSet().execute();
@@ -426,18 +426,13 @@ public class BackupRestoreFragment extends Fragment {
 
     private class LoadAndSet extends AsyncTask<String, String, Void> {
 
-
-        protected void onPreExecute() {
-        }
-
         @Override
         protected Void doInBackground(String... params) {
 
             files.clear();
-            files = Commands.loadFolders(Environment.getExternalStorageDirectory() + "/Overlays/Backup");
-
+            files = Commands.loadFolders(
+                    Environment.getExternalStorageDirectory() + "/Overlays/Backup");
             return null;
-
         }
 
         protected void onPostExecute(Void result) {

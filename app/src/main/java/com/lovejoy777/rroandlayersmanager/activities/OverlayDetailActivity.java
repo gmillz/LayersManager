@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
@@ -38,6 +39,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.bitsyko.liblayers.Layer;
+import com.bitsyko.liblayers.layerfiles.CMTEOverlay;
 import com.bitsyko.liblayers.layerfiles.ColorOverlay;
 import com.bitsyko.liblayers.layerfiles.CustomStyleOverlay;
 import com.bitsyko.liblayers.layerfiles.GeneralOverlay;
@@ -51,6 +53,8 @@ import com.lovejoy777.rroandlayersmanager.interfaces.StoppableAsyncTask;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.CreateList;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.ShowAllPackagesFromLayer;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.ShowPackagesFromList;
+import com.lovejoy777.rroandlayersmanager.overlaycreator.CMTETheme;
+import com.lovejoy777.rroandlayersmanager.utils.OverlayParser;
 import com.lovejoy777.rroandlayersmanager.views.CheckBoxHolder;
 
 import java.io.IOException;
@@ -72,6 +76,8 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
     private CoordinatorLayout cordLayout;
     private LoadDrawables imageLoader;
     private List<StoppableAsyncTask<Void, ?, ?>> loadLayerApks = new ArrayList<>();
+    private boolean isCMTETheme;
+    private CMTETheme mCMTETheme;
 
     private CheckBoxHolder.CheckBoxHolderCallback checkBoxHolderCallback = new CheckBoxHolder.CheckBoxHolderCallback() {
         @Override
@@ -118,6 +124,21 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
         Log.d("Colors", String.valueOf(layer.getColors()));
         Log.d("PluginVersion", String.valueOf(layer.getPluginVersion()));
+
+        if (isCMTETheme) {
+            loadCMTETheme();
+        }
+    }
+
+    private void loadCMTETheme() {
+        try {
+            AssetManager am = layer.getAssetManager();
+            for (String name : am.list("overlays")) {
+                Log.d("TEST", "name=" + name);
+            }
+        } catch (IOException e) {
+            // ignore
+        }
     }
 
     private boolean isAnyCheckboxEnabled(int mode) {
@@ -303,8 +324,13 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
     private void receiveIntent() {
         String layerPackageName = getIntent().getStringExtra("PackageName");
+        isCMTETheme = getIntent().getBooleanExtra("CMTETheme", false);
         try {
-            layer = Layer.layerFromPackageName(layerPackageName, getApplicationContext());
+            if (isCMTETheme) {
+                layer = Layer.layerFromCMTETheme(layerPackageName, getApplicationContext());
+            } else {
+                layer = Layer.layerFromPackageName(layerPackageName, getApplicationContext());
+            }
             //We're removing previous apks
             layer.close();
 
@@ -323,26 +349,29 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
         ImageView imageView = (ImageView) cordLayout.findViewById(R.id.backdrop);
 
         Drawable promo = layer.getPromo();
-
-        imageView.setImageDrawable(promo);
+        if (promo != null) {
+            imageView.setImageDrawable(promo);
+        }
 
         final CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) cordLayout.findViewById(R.id.collapsing_toolbar);
 
-        Palette.from(((BitmapDrawable) promo).getBitmap()).generate(new Palette.PaletteAsyncListener() {
-            public void onGenerated(Palette palette) {
-                Palette.Swatch vibrantSwatch = palette.getVibrantSwatch();
-                if (vibrantSwatch != null) {
-                    collapsingToolbar.setContentScrimColor(vibrantSwatch.getRgb());
-                    float[] hsv = new float[3];
-                    Color.colorToHSV(vibrantSwatch.getRgb(), hsv);
-                    hsv[2] *= 0.8f;
-                    collapsingToolbar.setStatusBarScrimColor(Color.HSVToColor(hsv));
-                    //int colorPrimaryDark = Color.HSVToColor(hsv);
-                    //  Window window = getWindow();
-                    // window.setStatusBarColor(Color.HSVToColor(hsv));
+        if (promo != null) {
+            Palette.from(((BitmapDrawable) promo).getBitmap()).generate(new Palette.PaletteAsyncListener() {
+                public void onGenerated(Palette palette) {
+                    Palette.Swatch vibrantSwatch = palette.getVibrantSwatch();
+                    if (vibrantSwatch != null) {
+                        collapsingToolbar.setContentScrimColor(vibrantSwatch.getRgb());
+                        float[] hsv = new float[3];
+                        Color.colorToHSV(vibrantSwatch.getRgb(), hsv);
+                        hsv[2] *= 0.8f;
+                        collapsingToolbar.setStatusBarScrimColor(Color.HSVToColor(hsv));
+                        //int colorPrimaryDark = Color.HSVToColor(hsv);
+                        //  Window window = getWindow();
+                        // window.setStatusBarColor(Color.HSVToColor(hsv));
+                    }
                 }
-            }
-        });
+            });
+        }
         Animator reveal = ViewAnimationUtils.createCircularReveal(imageView,
                 imageView.getWidth() / 2,
                 imageView.getHeight() / 2,
@@ -548,14 +577,43 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
     private void InstallAsyncOverlays() {
 
-        List<LayerFile> layersToInstall = new ArrayList<>();
+        LinearLayout layout = (LinearLayout) findViewById(R.id.LinearLayoutCategory1);
+        int childrenNumber = layout.getChildCount();
 
-        int childrenNumber = ((LinearLayout) findViewById(R.id.LinearLayoutCategory1)).getChildCount();
+        if (isCMTETheme) {
+            final ArrayList<CMTEOverlay> overlays = new ArrayList<>();
+            for (int i = 0; i < childrenNumber; i++) {
+                CheckBox checkBox = (CheckBox) layout.getChildAt(i).findViewById(R.id.CheckBox);
+                if (!checkBox.isChecked()) {
+                    continue;
+                }
+                if (checkBox.getTag() instanceof CMTEOverlay) {
+                    overlays.add((CMTEOverlay) checkBox.getTag());
+                }
+            }
+            new AsyncTask<Void, Void, Void>() {
+                public Void doInBackground(Void... v) {
+                    for (CMTEOverlay overlay : overlays) {
+                        Log.d("TEST", "name=" + overlay.getName());
+                        overlay.unpackOverlay();
+                        OverlayParser parser = new OverlayParser(overlay);
+                        parser.loadCommonResources();
+                        parser.findAndReplace(overlay.getPath());
+                        overlay.dereferenceOverlay(parser);
+                        overlay.createOverlay();
+                    }
+                    return null;
+                }
+            }.execute();
+            return;
+        }
+
+        List<LayerFile> layersToInstall = new ArrayList<>();
 
         for (int i = 0; i < childrenNumber; i++) {
 
             //TODO: Butterknife this
-            TableRow tableRow = (TableRow) ((LinearLayout) findViewById(R.id.LinearLayoutCategory1)).getChildAt(i);
+            TableRow tableRow = (TableRow) layout.getChildAt(i);
 
             CheckBox checkBox = (CheckBox) tableRow.findViewById(R.id.CheckBox);
             Spinner spinner = (Spinner) tableRow.findViewById(R.id.Spinner);

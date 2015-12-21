@@ -14,8 +14,9 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.Pair;
 
+import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
+
 import org.adw.launcher.IconShader;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
@@ -29,10 +30,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import kellinwood.security.zipsigner.ZipSigner;
-
 public class AppIcon {
 
+    public Overlay overlay;
     //ClassName:Drawable
     List<Pair<String, String>> iconList = new ArrayList<>();
     private ApplicationInfo applicationInfo;
@@ -47,30 +47,12 @@ public class AppIcon {
         this.res = context.getPackageManager().getResourcesForApplication(applicationInfo);
         this.iconPack = iconPack;
         this.inPack = inPack;
+        overlay = new Overlay(context, packageName);
     }
 
     public AppIcon(Context context, String packageName, IconPack iconPack, boolean inPack, Collection<Pair<String, String>> iconList) throws PackageManager.NameNotFoundException {
         this(context, packageName, iconPack, inPack);
         this.iconList.addAll(iconList);
-    }
-
-    private boolean activityInList(String activity) {
-
-        for (Pair<String, String> pair : iconList) {
-            if (pair.first.equals(activity)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public void addIconPair(Pair<String, String> pair) {
-        iconList.add(pair);
-    }
-
-    public void addIconPair(Collection<Pair<String, String>> pairs) {
-        iconList.addAll(pairs);
     }
 
     public String getPackageName() {
@@ -102,8 +84,6 @@ public class AppIcon {
         if (list.isEmpty()) {
             throw new RuntimeException("No application icon");
         }
-
-        String appIcon = new File(list.get(0)).getName().replace(".png", "");
 
         List<String> iconLocation = new ArrayList<>();
 
@@ -149,58 +129,6 @@ public class AppIcon {
             icon = Bitmap.createScaledBitmap(icon, 72, 72, true);
 
             icon = IconShader.processIcon(icon, compiledIconShader);
-
-            /*
-
-            if (!execList.isEmpty()) {
-
-
-                //Calculating overall picture brightness
-
-                long brightness = 0;
-
-                for (int x = 0; x < icon.getWidth(); x++) {
-                    for (int y = 0; y < icon.getHeight(); y++) {
-
-                       // brightness += calculateBrightness(icon.getPixel(x, y));
-
-                        float hsv[] = new float[3];
-
-                        Color.colorToHSV(icon.getPixel(x, y), hsv);
-
-                        brightness += (hsv[2] * 255);
-
-
-                    }
-                }
-
-                brightness = brightness / (icon.getWidth() * icon.getHeight());
-
-                for (int x = 0; x < icon.getWidth(); x++) {
-                    for (int y = 0; y < icon.getHeight(); y++) {
-
-                        int pixelColor = icon.getPixel(x, y);
-
-                        DataHolder dataHolder = new DataHolder();
-
-                        for (Exec exec : execList) {
-                            exec.parse(dataHolder, pixelColor, brightness);
-                        }
-
-                        dataHolder.A %= 255;
-                        dataHolder.B %= 255;
-                        dataHolder.G %= 255;
-                        dataHolder.R %= 255;
-
-
-                        icon.setPixel(x, y, Color.argb(dataHolder.A, dataHolder.R, dataHolder.G, dataHolder.B));
-
-                    }
-                }
-
-            }
-
-*/
 
             String scale = iconOverlaysData.get("scale");
 
@@ -296,9 +224,7 @@ public class AppIcon {
 
         }
 
-
-        compileAndSign();
-
+        overlay.create();
     }
 
     private Bitmap overlay(Bitmap bmp1, Bitmap bmp2) {
@@ -405,71 +331,15 @@ public class AppIcon {
         }
 
 
-        if (!(new File(context.getCacheDir() + "/tempFolder/" + getPackageName() + "/" + list.get(0)).exists())) {
+        if (!(new File(context.getCacheDir() + "/tempFolder/"
+                + getPackageName() + "/" + list.get(0)).exists())) {
             Log.d("Fallback for: ", getPackageName());
             installNotInPack();
         } else {
-            compileAndSign();
+            overlay.create();
         }
 
     }
-
-
-    private void compileAndSign() throws Exception {
-
-        File appt = new File(context.getCacheDir() + "/aapt");
-
-        String tempManifest =
-                IOUtils.toString(context.getAssets().open("AndroidManifest.xml"))
-                        .replace("<<TARGET_PACKAGE>>", getPackageName())
-                        .replace("<<PACKAGE_NAME>>", "pl.andrzejressel.icon." + getPackageName());
-
-
-        FileUtils.writeStringToFile(new File(context.getCacheDir() + "/tempFolder/" + getPackageName() + "/AndroidManifest.xml"), tempManifest);
-
-
-        if (!new File(context.getCacheDir() + "/tempFolder/" + getPackageName() + "/res").exists()) {
-            return;
-        }
-
-
-        File unsignedApp = new File(context.getCacheDir() + "/tempFolder/unsigned." + getPackageName() + ".apk");
-
-        File signedApp = new File(context.getCacheDir() + "/tempFolder/signed." + getPackageName() + ".apk");
-
-
-        Process nativeApp = Runtime.getRuntime().exec(new String[]{
-                appt.getAbsolutePath(), "p",
-                "-M", context.getCacheDir() + "/tempFolder/" + getPackageName() + "/AndroidManifest.xml",
-                "-S", context.getCacheDir() + "/tempFolder/" + getPackageName() + "/res",
-                "-I", "system/framework/framework-res.apk",
-                "-F", unsignedApp.getAbsolutePath()});
-
-
-        IOUtils.toString(nativeApp.getInputStream());
-        IOUtils.toString(nativeApp.getErrorStream());
-
-        nativeApp.waitFor();
-
-        Log.d("Signing start", "");
-
-        ZipSigner zipSigner = new ZipSigner();
-        zipSigner.setKeymode("testkey");
-        zipSigner.signZip(unsignedApp.getAbsolutePath(), signedApp.getAbsolutePath());
-
-        Log.d("Signing end", "");
-
-
-    }
-
-    private int calculateBrightness(int color) {
-        int R = Color.red(color);
-        int G = Color.green(color);
-        int B = Color.blue(color);
-
-        return (int) (0.21 * R + 0.72 * G + 0.07 * B);
-    }
-
 
     private List<String> getApplicationIcons() throws IOException, InterruptedException {
 

@@ -13,7 +13,6 @@ public class DeviceSingleton {
     public static Singleton getInstance() {
 
         if (device == null) {
-
             String mountData = Helpers.commandToString("mount");
 
             if (StringUtils.isEmpty(mountData)) {
@@ -27,16 +26,13 @@ public class DeviceSingleton {
             boolean vendorDevice = false;
 
             if (mountDataArray != null) {
-
                 for (String mountDataLine : mountDataArray) {
-
                     String[] anotherStringArray = StringUtils.split(mountDataLine);
-
-                    if (anotherStringArray != null && anotherStringArray.length >= 2 && anotherStringArray[1].equals("/vendor")) {
+                    if (anotherStringArray != null && anotherStringArray.length >= 2
+                            && anotherStringArray[1].equals("/vendor")) {
                         vendorDevice = true;
                         break;
                     }
-
                 }
             }
 
@@ -47,12 +43,9 @@ public class DeviceSingleton {
                 device = new NormalDevice();
                 Log.d("Manager", "NormalDevice detected");
             }
-
         }
-
         return device;
     }
-
 
     public interface Singleton {
         String getOverlayFolder();
@@ -60,9 +53,7 @@ public class DeviceSingleton {
         String getMountFolder();
     }
 
-
     private static class VendorDevice implements Singleton {
-
 
         @Override
         public String getOverlayFolder() {
@@ -78,7 +69,6 @@ public class DeviceSingleton {
 
     private static class NormalDevice implements Singleton {
 
-
         @Override
         public String getOverlayFolder() {
             return "/system/vendor/overlay";
@@ -89,6 +79,4 @@ public class DeviceSingleton {
             return "/system";
         }
     }
-
-
 }

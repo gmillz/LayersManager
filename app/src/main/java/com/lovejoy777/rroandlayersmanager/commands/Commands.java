@@ -17,19 +17,16 @@ import com.bitsyko.liblayers.layerfiles.LayerFile;
 import com.lovejoy777.rroandlayersmanager.AsyncResponse;
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.R;
-import com.lovejoy777.rroandlayersmanager.Utils;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,11 +40,8 @@ public class Commands {
 
     private static final String[] aaptUrls = {
             "https://www.dropbox.com/s/au7ccu1gtroqvzt/aapt_x86?dl=1",
-            "https://www.dropbox.com/s/5x2fpgw6ojyao2d/aapt_arm?dl=1"};
-
-    //No instances
-    private Commands() {
-    }
+            "https://www.dropbox.com/s/5x2fpgw6ojyao2d/aapt_arm?dl=1"
+    };
 
     public static ArrayList<String> loadFiles(String directory) {
 
@@ -68,7 +62,6 @@ public class Commands {
     }
 
     public static ArrayList<String> loadFolders(String directory) {
-
         File f = new File(directory);
         ArrayList<String> folders = new ArrayList<>();
 
@@ -112,7 +105,6 @@ public class Commands {
     }
 
     public static ArrayList<String> fileNamesFromZip(File zip) throws IOException {
-
         ArrayList<String> files = new ArrayList<>();
 
         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(zip)));
@@ -123,58 +115,15 @@ public class Commands {
         }
 
         return files;
-
-    }
-
-    public static BufferedReader runCommand(String cmd) {
-        BufferedReader reader;
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(
-                    process.getOutputStream());
-            os.writeBytes(cmd + "\n");
-            os.writeBytes("exit\n");
-            reader = new BufferedReader(new InputStreamReader(
-                    process.getInputStream()));
-            String err = (new BufferedReader(new InputStreamReader(
-                    process.getErrorStream()))).readLine();
-            os.flush();
-
-            if (process.waitFor() != 0 || !StringUtils.isEmpty(err)) {
-
-                if (err != null) {
-                    Log.e("Root Error, cmd: " + cmd, err);
-                } else {
-                    Log.e("Root Error, cmd: " + cmd, "");
-                }
-
-                return null;
-            }
-            return reader;
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static boolean remountSystem(String mountType) {
-        String mountPoint = DeviceSingleton.getInstance().getMountFolder();
-        BufferedReader reader = runCommand("mount -o remount,"
-                + mountType + " " + mountPoint + "\n");
-        try {
-            if (reader != null) reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
     }
 
     public static int getSortMode(Activity context) {
+        if (context == null) return 1;
         return PreferenceManager.getDefaultSharedPreferences(context).getInt("sortMode", 1);
     }
 
     public static void setSortMode(Activity context, int mode) {
+        if (context == null) return;
         PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("sortMode", mode).commit();
     }
 
@@ -227,7 +176,6 @@ public class Commands {
 
         @Override
         protected Void doInBackground(String... files) {
-
             String tempDir = context.getCacheDir().getAbsolutePath() + File.separator + "zipCache/";
 
             try {
@@ -242,31 +190,24 @@ public class Commands {
                 }
             }
 
-
             for (String file : files) {
-
                 if (file.endsWith(".zip")) {
-
                     Log.d("Extracting", file);
-
                     try {
-
-                        ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(file)));
+                        ZipInputStream zis = new ZipInputStream(
+                                new BufferedInputStream(new FileInputStream(file)));
                         ZipEntry ze;
                         ZipFile zipFile = new ZipFile(file);
 
                         while ((ze = zis.getNextEntry()) != null) {
-                            FileUtils.copyInputStreamToFile(zipFile.getInputStream(ze), new File(tempDir + ze.getName()));
+                            FileUtils.copyInputStreamToFile(
+                                    zipFile.getInputStream(ze), new File(tempDir + ze.getName()));
                         }
-
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.e("Extracting failed", file);
                     }
-
-
                 } else if (file.endsWith(".apk")) {
-
                     Log.d("Copying", file);
 
                     File apkFile = new File(file);
@@ -277,10 +218,7 @@ public class Commands {
                         e.printStackTrace();
                         Log.e("Copying failed", file);
                     }
-
                 }
-
-
             }
 
             Utils.remount("rw");
@@ -382,21 +320,17 @@ public class Commands {
 
         @Override
         protected Void doInBackground(Void... params) {
-
             // MOUNT /SYSTEM RW
             Utils.remount("rw");
-
             for (LayerFile layerFile : layersToInstall) {
                 try {
                     Utils.moveFile(layerFile.getFile(context).getAbsolutePath(),
                             DeviceSingleton.getInstance().getOverlayFolder() + "/");
-
                     publishProgress();
                 } catch (Exception e) {
                     e.printStackTrace();
                     publishProgress(e.getMessage());
                 }
-
             }
 
             if (!layersToInstall.isEmpty()) {
@@ -410,7 +344,6 @@ public class Commands {
             Utils.applyPermissionsRecursive(DeviceSingleton.getInstance().getOverlayFolder(), "644");
             Utils.applyPermissions(DeviceSingleton.getInstance().getOverlayFolder(), "755");
             Utils.remount("ro");
-
             return null;
         }
 
@@ -475,9 +408,7 @@ public class Commands {
             File appt = new File(context.getCacheDir() + "/aapt");
 
             if (!appt.exists()) {
-
                 for (String url : aaptUrls) {
-
                     try {
                         FileUtils.copyURLToFile(new URL(url), appt);
 
@@ -493,25 +424,19 @@ public class Commands {
                             Log.d("AAPT", data);
                             break;
                         }
-
-
                     } catch (IOException | InterruptedException e) {
                         e.printStackTrace();
                     }
-
-
                 }
-
             }
 
-
             Utils.applyPermissions(appt.getAbsolutePath(), "700");
-
 
             for (AppIcon app : list) {
                 Log.d("Installing", app.getPackageName());
                 try {
                     app.install();
+                    app.overlay.install();
                     publishProgress();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -519,10 +444,7 @@ public class Commands {
                 }
             }
 
-
             Log.d("Icon", "Moving");
-
-            //   RootTools.remount(DeviceSingleton.getInstance().getMountFolder(), "RW");
 
             Utils.remount("rw");
             Utils.moveFile(context.getCacheDir() + "/tempFolder/signed*", DeviceSingleton.getInstance().getOverlayFolder());
@@ -539,5 +461,4 @@ public class Commands {
             asyncResponse.processFinish();
         }
     }
-
 }

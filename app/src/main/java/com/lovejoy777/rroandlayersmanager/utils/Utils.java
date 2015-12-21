@@ -1,7 +1,9 @@
-package com.lovejoy777.rroandlayersmanager;
+package com.lovejoy777.rroandlayersmanager.utils;
 
 import android.content.res.AssetManager;
 import android.util.Log;
+
+import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 
 import org.apache.commons.io.IOUtils;
 

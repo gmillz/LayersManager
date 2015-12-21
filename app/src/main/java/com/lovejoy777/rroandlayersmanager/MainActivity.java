@@ -16,6 +16,5 @@ public class MainActivity extends Activity {
         startActivity(intent);
         overridePendingTransition(0, 0);
         finish();
-
     }
 }
