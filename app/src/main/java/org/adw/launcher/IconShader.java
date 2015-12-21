@@ -1,16 +1,13 @@
 package org.adw.launcher;
 
+import android.content.res.XmlResourceParser;
+import android.graphics.Bitmap;
+
+import org.xmlpull.v1.XmlPullParser;
+
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
-import android.content.res.XmlResourceParser;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.util.DisplayMetrics;
-
-import org.xmlpull.v1.XmlPullParser;
 
 /**
  * Provides methods and constructs for handling themes with an icon shader.
@@ -19,116 +16,6 @@ import org.xmlpull.v1.XmlPullParser;
  * Process icons with Drawable processIcon(Drawable icon, CompiledIconShader c)
  */
 public class IconShader {
-
-    static class IMAGE {
-        static final int ICON = 0;
-        static final int BUFFER = 1;
-        static final int OUTPUT = 2;
-    }
-
-    static class MODE {
-        static final int NONE = 0;
-        static final int WRITE = 1;
-        static final int MULTIPLY = 2;
-        static final int DIVIDE = 3;
-        static final int ADD = 4;
-        static final int SUBTRACT = 5;
-    }
-
-    static class INPUT {
-        static final int AVERAGE = 0;
-        static final int INTENSITY = 1;
-        static final int CHANNEL = 2;
-        static final int VALUE = 3;
-    }
-
-    static class CHANNEL {
-        static final int ALPHA = 0;
-        static final int RED = 1;
-        static final int GREEN = 2;
-        static final int BLUE = 3;
-    }
-
-    static class Shader {
-        final int mode, target, targetChannel;
-        final int input, inputMode, inputChannel;
-        final float inputValue;
-
-        Shader(int mode, int target, int targetChannel, int input,
-               int inputMode, int inputChannel, float inputValue) {
-            this.mode = mode;
-            this.target = target;
-            this.targetChannel = targetChannel;
-            this.input = input;
-            this.inputMode = inputMode;
-            this.inputChannel = inputChannel;
-            this.inputValue = inputValue;
-        }
-    }
-
-    static class ShaderUses {
-        final boolean buffer, icon_intensity, buffer_intensity, output_intensity;
-
-        ShaderUses(List<Shader> shaders) {
-            boolean buffer = false, icon_intensity = false, buffer_intensity = false, output_intensity = false;
-            for (Shader s : shaders) {
-                if (s.mode == MODE.NONE)
-                    continue;
-                if (s.input == IMAGE.BUFFER || s.target == IMAGE.BUFFER)
-                    buffer = true;
-                if (s.inputMode == INPUT.INTENSITY)
-                    switch (s.input) {
-                        case IMAGE.ICON:
-                            icon_intensity = true;
-                            break;
-                        case IMAGE.BUFFER:
-                            buffer_intensity = true;
-                            break;
-                        case IMAGE.OUTPUT:
-                            output_intensity = true;
-                            break;
-                    }
-            }
-            this.buffer = buffer;
-            this.icon_intensity = icon_intensity;
-            this.buffer_intensity = buffer_intensity;
-            this.output_intensity = output_intensity;
-        }
-    }
-
-    public static class CompiledIconShader {
-        static final int MAXLENGTH = 5184; // 72*72
-
-        final List<Shader> shaders;
-        final ShaderUses uses;
-
-        // array references held here so that they are only allocated once
-        final int[] pixels;
-        final float[][] icon, buffer, output;
-        final float[] icon_intensity, buffer_intensity, output_intensity;
-
-        public CompiledIconShader(List<Shader> s) {
-            shaders = s;
-            uses = new ShaderUses(s);
-            pixels = new int[MAXLENGTH];
-            icon = new float[4][MAXLENGTH];
-            output = new float[4][MAXLENGTH];
-
-            if (uses.buffer)
-                buffer = new float[4][MAXLENGTH];
-            else buffer = null;
-
-            if (uses.icon_intensity)
-                icon_intensity = new float[MAXLENGTH];
-            else icon_intensity = null;
-            if (uses.buffer_intensity)
-                buffer_intensity = new float[MAXLENGTH];
-            else buffer_intensity = null;
-            if (uses.output_intensity)
-                output_intensity = new float[MAXLENGTH];
-            else output_intensity = null;
-        }
-    }
 
     public static CompiledIconShader parseXml(XmlPullParser xpp) {
         List<Shader> shaders = new LinkedList<Shader>();
@@ -516,5 +403,115 @@ public class IconShader {
     private static void getIntensity(float[] intensity, float[][] array, int length) {
         for (int i = 0; i < length; i++)
             intensity[i] = (array[1][i] + array[2][i] + array[3][i]) / 3;
+    }
+
+    static class IMAGE {
+        static final int ICON = 0;
+        static final int BUFFER = 1;
+        static final int OUTPUT = 2;
+    }
+
+    static class MODE {
+        static final int NONE = 0;
+        static final int WRITE = 1;
+        static final int MULTIPLY = 2;
+        static final int DIVIDE = 3;
+        static final int ADD = 4;
+        static final int SUBTRACT = 5;
+    }
+
+    static class INPUT {
+        static final int AVERAGE = 0;
+        static final int INTENSITY = 1;
+        static final int CHANNEL = 2;
+        static final int VALUE = 3;
+    }
+
+    static class CHANNEL {
+        static final int ALPHA = 0;
+        static final int RED = 1;
+        static final int GREEN = 2;
+        static final int BLUE = 3;
+    }
+
+    static class Shader {
+        final int mode, target, targetChannel;
+        final int input, inputMode, inputChannel;
+        final float inputValue;
+
+        Shader(int mode, int target, int targetChannel, int input,
+               int inputMode, int inputChannel, float inputValue) {
+            this.mode = mode;
+            this.target = target;
+            this.targetChannel = targetChannel;
+            this.input = input;
+            this.inputMode = inputMode;
+            this.inputChannel = inputChannel;
+            this.inputValue = inputValue;
+        }
+    }
+
+    static class ShaderUses {
+        final boolean buffer, icon_intensity, buffer_intensity, output_intensity;
+
+        ShaderUses(List<Shader> shaders) {
+            boolean buffer = false, icon_intensity = false, buffer_intensity = false, output_intensity = false;
+            for (Shader s : shaders) {
+                if (s.mode == MODE.NONE)
+                    continue;
+                if (s.input == IMAGE.BUFFER || s.target == IMAGE.BUFFER)
+                    buffer = true;
+                if (s.inputMode == INPUT.INTENSITY)
+                    switch (s.input) {
+                        case IMAGE.ICON:
+                            icon_intensity = true;
+                            break;
+                        case IMAGE.BUFFER:
+                            buffer_intensity = true;
+                            break;
+                        case IMAGE.OUTPUT:
+                            output_intensity = true;
+                            break;
+                    }
+            }
+            this.buffer = buffer;
+            this.icon_intensity = icon_intensity;
+            this.buffer_intensity = buffer_intensity;
+            this.output_intensity = output_intensity;
+        }
+    }
+
+    public static class CompiledIconShader {
+        static final int MAXLENGTH = 5184; // 72*72
+
+        final List<Shader> shaders;
+        final ShaderUses uses;
+
+        // array references held here so that they are only allocated once
+        final int[] pixels;
+        final float[][] icon, buffer, output;
+        final float[] icon_intensity, buffer_intensity, output_intensity;
+
+        public CompiledIconShader(List<Shader> s) {
+            shaders = s;
+            uses = new ShaderUses(s);
+            pixels = new int[MAXLENGTH];
+            icon = new float[4][MAXLENGTH];
+            output = new float[4][MAXLENGTH];
+
+            if (uses.buffer)
+                buffer = new float[4][MAXLENGTH];
+            else buffer = null;
+
+            if (uses.icon_intensity)
+                icon_intensity = new float[MAXLENGTH];
+            else icon_intensity = null;
+            if (uses.buffer_intensity)
+                buffer_intensity = new float[MAXLENGTH];
+            else buffer_intensity = null;
+            if (uses.output_intensity)
+                output_intensity = new float[MAXLENGTH];
+            else output_intensity = null;
+        }
     }
 }

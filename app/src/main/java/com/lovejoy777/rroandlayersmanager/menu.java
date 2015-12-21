@@ -41,10 +41,8 @@ import com.rubengees.introduction.entity.Option;
 import com.rubengees.introduction.entity.Slide;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 public class menu extends AppCompatActivity {
 
@@ -55,29 +53,6 @@ public class menu extends AppCompatActivity {
                     "apps&docType=1&sp=CAFiDgoMTGF5ZXJzIFRoZW1legIYAIoBAggB:S:ANO1ljK_ZAY";
 
     private DrawerLayout mDrawerLayout;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.fragment_container);
-
-        loadToolbarNavDrawer();
-
-        if (Utils.isRootAccessAvailable()) {
-            Toast.makeText(this, getString(R.string.noRoot), Toast.LENGTH_LONG).show();
-        } else {
-            createImportantDirectories();
-        }
-
-        Boolean tutorialShown = PreferenceManager.getDefaultSharedPreferences(menu.this)
-                .getBoolean("tutorialShown", false);
-        if (!tutorialShown) {
-            loadTutorial(this);
-        } else {
-            changeFragment(1);
-        }
-    }
 
     public static void loadTutorial(final Activity context) {
         new IntroductionBuilder(context).withSlides(generateSlides()).introduceMyself();
@@ -124,6 +99,29 @@ public class menu extends AppCompatActivity {
         return slides;
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.fragment_container);
+
+        loadToolbarNavDrawer();
+
+        if (Utils.isRootAccessAvailable()) {
+            Toast.makeText(this, getString(R.string.noRoot), Toast.LENGTH_LONG).show();
+        } else {
+            createImportantDirectories();
+        }
+
+        Boolean tutorialShown = PreferenceManager.getDefaultSharedPreferences(menu.this)
+                .getBoolean("tutorialShown", false);
+        if (!tutorialShown) {
+            loadTutorial(this);
+        } else {
+            changeFragment(1);
+        }
+    }
+
     private void setupViewPager(ViewPager viewPager, int mode) {
         viewPager.removeAllViews();
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
@@ -162,40 +160,6 @@ public class menu extends AppCompatActivity {
         viewPager.setAdapter(adapter);
     }
 
-    class ViewPagerAdapter extends FragmentStatePagerAdapter {
-        private final List<android.support.v4.app.Fragment> mFragmentList = new ArrayList<>();
-        private final List<String> mFragmentTitleList = new ArrayList<>();
-
-        public ViewPagerAdapter(android.support.v4.app.FragmentManager manager) {
-            super(manager);
-        }
-
-        @Override
-        public android.support.v4.app.Fragment getItem(int position) {
-            return mFragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return mFragmentList.size();
-        }
-
-        public void addFrag(android.support.v4.app.Fragment fragment, String title) {
-            mFragmentList.add(fragment);
-            mFragmentTitleList.add(title);
-        }
-
-        public void removeAllFrags() {
-            mFragmentList.clear();
-            mFragmentTitleList.clear();
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return mFragmentTitleList.get(position);
-        }
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -203,15 +167,15 @@ public class menu extends AppCompatActivity {
                 resultCode == RESULT_OK) {
             for (Option option : data.<Option>getParcelableArrayListExtra(
                     IntroductionActivity.OPTION_RESULT)) {
-                if (option.getPosition() == 5 && option.isActivated()){
+                if (option.getPosition() == 5 && option.isActivated()) {
                     SharedPreferences myprefs =
                             getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("switch1",true).apply();
+                    myprefs.edit().putBoolean("switch1", true).apply();
                     Commands.killLauncherIcon(this);
-                } else if (option.getPosition() == 6 && option.isActivated()){
+                } else if (option.getPosition() == 6 && option.isActivated()) {
                     SharedPreferences myprefs =
                             getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("disableNotInstalledApps",true).apply();
+                    myprefs.edit().putBoolean("disableNotInstalledApps", true).apply();
                 }
                 PreferenceManager.getDefaultSharedPreferences(this).edit()
                         .putBoolean("tutorialShown", true).apply();
@@ -307,7 +271,7 @@ public class menu extends AppCompatActivity {
                                             PLAY_SHOWCASE_URI)), bndlanimation);
                                     break;
                                 }
-                            //PlayStore
+                                //PlayStore
                             case R.id.nav_playStore:
                                 startActivity(new Intent(Intent.ACTION_VIEW,
                                         Uri.parse(PLAY_LAYERS_THEMES_URI)), bndlanimation);
@@ -437,5 +401,39 @@ public class menu extends AppCompatActivity {
             changeFragment(1);
         }
         super.onBackPressed();
+    }
+
+    class ViewPagerAdapter extends FragmentStatePagerAdapter {
+        private final List<android.support.v4.app.Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
+
+        public ViewPagerAdapter(android.support.v4.app.FragmentManager manager) {
+            super(manager);
+        }
+
+        @Override
+        public android.support.v4.app.Fragment getItem(int position) {
+            return mFragmentList.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return mFragmentList.size();
+        }
+
+        public void addFrag(android.support.v4.app.Fragment fragment, String title) {
+            mFragmentList.add(fragment);
+            mFragmentTitleList.add(title);
+        }
+
+        public void removeAllFrags() {
+            mFragmentList.clear();
+            mFragmentTitleList.clear();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mFragmentTitleList.get(position);
+        }
     }
 }

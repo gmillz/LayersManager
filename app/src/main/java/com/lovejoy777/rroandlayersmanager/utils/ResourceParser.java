@@ -24,12 +24,6 @@ public class ResourceParser {
         resourceTypes.add("dimen");
     }
 
-    public static class Style {
-        public String name;
-        public String parent;
-        public HashMap<String, String> contents = new HashMap<>();
-    }
-
     public static void parseXML(File file, HashMap<String, HashMap<String, String>> map) {
         try {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
@@ -45,7 +39,7 @@ public class ResourceParser {
                     }
                 }
             }
-        } catch (XmlPullParserException |IOException e) {
+        } catch (XmlPullParserException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -57,13 +51,13 @@ public class ResourceParser {
             XmlPullParser parser = factory.newPullParser();
             parser.setInput(new FileInputStream(file), null);
 
-            while(parser.next() != XmlPullParser.END_DOCUMENT) {
+            while (parser.next() != XmlPullParser.END_DOCUMENT) {
                 String name = parser.getName();
                 if (name != null && name.equals("style")) {
                     parseStyle(parser, map);
                 }
             }
-        } catch (XmlPullParserException|IOException e) {
+        } catch (XmlPullParserException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -112,7 +106,7 @@ public class ResourceParser {
     }
 
     private static void parseResource(XmlPullParser parser, String resType,
-                               HashMap<String, HashMap<String, String>> map)
+                                      HashMap<String, HashMap<String, String>> map)
             throws XmlPullParserException, IOException {
         int size = parser.getAttributeCount();
         for (int i = 0; i < size; i++) {
@@ -120,8 +114,8 @@ public class ResourceParser {
             String attrValue = parser.getAttributeValue(i);
             if (attrName.equals("name")) {
                 int eventType = parser.next();
-                while ( eventType != XmlPullParser.END_TAG) {
-                    if ( eventType == XmlPullParser.TEXT ) {
+                while (eventType != XmlPullParser.END_TAG) {
+                    if (eventType == XmlPullParser.TEXT) {
                         if (parser.getText() != null) {
                             map.get(resType).put(attrValue, parser.getText());
                             Log.d("TEST", "value=" + map.get(resType).get(attrName));
@@ -132,6 +126,12 @@ public class ResourceParser {
                 }
             }
         }
+    }
+
+    public static class Style {
+        public String name;
+        public String parent;
+        public HashMap<String, String> contents = new HashMap<>();
     }
 
 }

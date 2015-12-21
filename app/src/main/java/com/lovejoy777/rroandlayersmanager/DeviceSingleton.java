@@ -49,6 +49,7 @@ public class DeviceSingleton {
 
     public interface Singleton {
         String getOverlayFolder();
+
         String getMountFolder();
     }
 

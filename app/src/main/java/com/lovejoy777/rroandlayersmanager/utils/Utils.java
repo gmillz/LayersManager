@@ -1,13 +1,9 @@
 package com.lovejoy777.rroandlayersmanager.utils;
 
-import android.content.Context;
 import android.content.res.AssetManager;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
-
-import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -104,7 +100,7 @@ public class Utils {
                 return null;
             }
             return reader;
-        } catch (IOException|InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         return null;
@@ -137,7 +133,7 @@ public class Utils {
         String[] places = {"/sbin/", "/system/bin/", "/system/xbin/", "/data/local/xbin/",
                 "/data/local/bin/", "/system/sd/xbin/", "/system/bin/failsafe/", "/data/local/"};
         for (String where : places) {
-            if ( new File( where + binaryName ).exists() ) {
+            if (new File(where + binaryName).exists()) {
                 found = true;
                 break;
             }
@@ -146,7 +142,7 @@ public class Utils {
     }
 
     public static boolean copyAssetFolder(AssetManager assetManager,
-                                           String fromAssetPath, String toPath) {
+                                          String fromAssetPath, String toPath) {
         try {
             String[] files = assetManager.list(fromAssetPath);
             new File(toPath).mkdirs();
@@ -171,7 +167,7 @@ public class Utils {
     }
 
     public static boolean copyAsset(AssetManager assetManager,
-                                     String fromAssetPath, String toPath) {
+                                    String fromAssetPath, String toPath) {
         InputStream in = null;
         OutputStream out = null;
         try {
@@ -185,7 +181,7 @@ public class Utils {
             out.close();
             out = null;
             return true;
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -194,7 +190,7 @@ public class Utils {
     private static void copyFile(InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[1024];
         int read;
-        while((read = in.read(buffer)) != -1){
+        while ((read = in.read(buffer)) != -1) {
             out.write(buffer, 0, read);
         }
     }

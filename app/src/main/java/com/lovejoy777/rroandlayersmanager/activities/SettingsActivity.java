@@ -17,7 +17,7 @@ public class SettingsActivity extends PreferenceActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     Boolean showLauncherShortcut = true;
-    String settingsPackageName= "com.android.settings";
+    String settingsPackageName = "com.android.settings";
     String settingsLayersDrawableName = "ic_bitsyko_layers";
 
 
@@ -54,8 +54,8 @@ public class SettingsActivity extends PreferenceActivity implements
 
         try {
             Resources res = getApplicationContext().getPackageManager().getResourcesForApplication(settingsPackageName);
-            int drawableid = res.getIdentifier(settingsPackageName+":drawable/"+settingsLayersDrawableName, "drawable", settingsPackageName);
-            if ( drawableid != 0 ) {
+            int drawableid = res.getIdentifier(settingsPackageName + ":drawable/" + settingsLayersDrawableName, "drawable", settingsPackageName);
+            if (drawableid != 0) {
                 showLauncherShortcut = false;
                 Log.d("LayersManager", "checked settings for icon, true");
             } else {

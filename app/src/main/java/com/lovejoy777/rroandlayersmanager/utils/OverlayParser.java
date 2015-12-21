@@ -1,30 +1,17 @@
 package com.lovejoy777.rroandlayersmanager.utils;
 
-import android.text.TextUtils;
-import android.util.Log;
-
 import com.bitsyko.liblayers.Layer;
 import com.bitsyko.liblayers.layerfiles.CMTEOverlay;
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class OverlayParser {
 
-    private boolean resourcesFound = false;
-
     CMTEOverlay mOverlay;
-
     HashMap<String, HashMap<String, String>> mCommonResources = new HashMap<>();
+    private boolean resourcesFound = false;
 
     public OverlayParser(CMTEOverlay overlay) {
         mOverlay = overlay;

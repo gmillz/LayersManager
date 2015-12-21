@@ -16,6 +16,7 @@ import android.util.Pair;
 
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
 
+import org.adw.launcher.IconShader;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
@@ -29,19 +30,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.adw.launcher.*;
-
 public class AppIcon {
 
+    public Overlay overlay;
+    //ClassName:Drawable
+    List<Pair<String, String>> iconList = new ArrayList<>();
     private ApplicationInfo applicationInfo;
     private Resources res;
     private Context context;
     private IconPack iconPack;
-    public Overlay overlay;
     private boolean inPack;
-
-    //ClassName:Drawable
-    List<Pair<String, String>> iconList = new ArrayList<>();
 
     public AppIcon(Context context, String packageName, IconPack iconPack, boolean inPack) throws PackageManager.NameNotFoundException {
         this.context = context;

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TableRow
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<TableRow xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content">
 
@@ -12,7 +11,7 @@
         <CheckBox
             android:id="@+id/CheckBox"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
     </com.lovejoy777.rroandlayersmanager.views.CheckBoxHolder>
 
     <Spinner
@@ -20,6 +19,6 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:gravity="end"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
 </TableRow>

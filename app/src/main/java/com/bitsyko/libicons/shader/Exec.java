@@ -5,7 +5,6 @@ import android.graphics.Color;
 import com.bitsyko.libicons.shader.TargetChannel.Alpha;
 import com.bitsyko.libicons.shader.TargetChannel.Blue;
 import com.bitsyko.libicons.shader.TargetChannel.Green;
-import com.bitsyko.libicons.shader.TargetChannel.Intensity;
 import com.bitsyko.libicons.shader.TargetChannel.Red;
 import com.bitsyko.libicons.shader.TargetChannel.TargetChannelInterface;
 
@@ -53,7 +52,7 @@ public class Exec {
                 output = new Green();
                 break;
             default:
-                throw new RuntimeException("Wrong channel "  + channel);
+                throw new RuntimeException("Wrong channel " + channel);
 
         }
 

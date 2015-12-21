@@ -20,6 +20,7 @@ import java.util.zip.ZipFile;
 
 public abstract class LayerFile implements Comparable<LayerFile> {
 
+    private static final String PACKAGE_REGEX = "targetPackage=\"(.*?)\"";
     protected Layer parentLayer;
     protected String name;
     protected File file;
@@ -71,8 +72,6 @@ public abstract class LayerFile implements Comparable<LayerFile> {
         return parentLayer;
     }
 
-    private static final String PACKAGE_REGEX = "targetPackage=\"(.*?)\"";
-
     public String getRelatedPackage() {
 
         if (file == null) {
@@ -97,7 +96,7 @@ public abstract class LayerFile implements Comparable<LayerFile> {
 
         Matcher matcher = pattern.matcher(AndroidXMLDecompress.decompressXML(array));
 
-        if(matcher.find()) {
+        if (matcher.find()) {
             return matcher.group(1);
         } else {
             return "Can't find related package";

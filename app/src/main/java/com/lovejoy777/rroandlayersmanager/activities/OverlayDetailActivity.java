@@ -258,7 +258,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
         loadScreenshots();
 
 
-
         //  recyclerView.setMinimumWidth(2000);
 
     }
@@ -281,7 +280,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
         //switch to select all Checkboxes
         installAllGeneral = (Switch) cordLayout.findViewById(R.id.Tv_Category1Name);
         installAllStyle = (Switch) cordLayout.findViewById(R.id.Tv_Category2Name);
-
 
 
         //Hide the FAB
@@ -740,7 +738,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
         }
 
 
-
         for (AsyncTask<Void, ?, ?> asyncTask : loadLayerApks) {
             asyncTask.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
         }
@@ -752,7 +749,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
         LinearLayout screenshotLayout;
 
 
-
         @Override
         protected void onPreExecute() {
             // screenshotLayout = (LinearLayout) cordLayout.findViewById(R.id.LinearLayoutScreenshots);
@@ -760,7 +756,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
         @Override
         protected void onProgressUpdate(Void... values) {
-
 
 
         }

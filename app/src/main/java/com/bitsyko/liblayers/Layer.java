@@ -33,8 +33,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,8 +40,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -52,25 +48,26 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
 
     // Theme asset paths
     private static final String COMMON_FOLDER = "overlays/common";
-
+    private static final String CM_THEME_NAME_TAG = "org.cyanogenmod.theme.name";
+    private static final String CM_THEME_AUTHOR_TAG = "org.cyanogenmod.theme.author";
     private final String name;
     private final String packageName;
     private final String developer;
-    private List<Drawable> screenShots;
-    private Drawable promo;
     private final ApplicationInfo applicationInfo;
     private final Resources resources;
     private final Context context;
+    private final Drawable icon;
+    public boolean isCMTETheme;
+    private List<Drawable> screenShots;
+    private Drawable promo;
     private Context layerContext = null;
     private List<Color> colors = new ArrayList<>();
     private String generalZip;
     private List<LayerFile> layers;
-    public boolean isCMTETheme;
-
     //Map for unpacked zipfiles from layer
     private Map<String, ZipFile> zipFileMap = new ArrayMap<>();
-
-    private final Drawable icon;
+    private int screenShotId = 1;
+    private int screenShotNumber = -1;
 
     public Layer(String name, String developer, Drawable icon) {
         this(name, developer, icon, null, null, null, null, false);
@@ -168,15 +165,6 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
 
         return layerList;
     }
-
-    private static class CMPackageInfo {
-        String name;
-        String dev;
-        boolean cmTheme;
-    }
-
-    private static final String CM_THEME_NAME_TAG = "org.cyanogenmod.theme.name";
-    private static final String CM_THEME_AUTHOR_TAG = "org.cyanogenmod.theme.author";
 
     private static CMPackageInfo getMetaData(Context context, ApplicationInfo info) {
         File file = new File(info.sourceDir);
@@ -278,10 +266,6 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
         });
     }
 
-    private int screenShotId = 1;
-
-    private int screenShotNumber = -1;
-
     public int getScreenShotsNumber() {
 
         if (screenShotNumber == -1) {
@@ -328,7 +312,6 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
 
         return new Pair<>(screenShotId - 1, drawable);
     }
-
 
     public List<Drawable> getScreenShots(Callback<Drawable> callback) {
 
@@ -516,7 +499,6 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
         return layers;
     }
 
-
     public int getPluginVersion() {
         int mPluginVersion = 2;
         Bundle bundle = applicationInfo.metaData;
@@ -588,5 +570,11 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
 
     public String getGeneralZip() {
         return generalZip;
+    }
+
+    private static class CMPackageInfo {
+        String name;
+        String dev;
+        boolean cmTheme;
     }
 }

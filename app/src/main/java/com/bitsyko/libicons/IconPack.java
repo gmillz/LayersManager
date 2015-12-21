@@ -17,7 +17,6 @@ import android.util.Pair;
 
 import com.bitsyko.libicons.shader.Exec;
 
-import org.apache.commons.io.IOUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -35,16 +34,26 @@ import java.util.Set;
 
 public class IconPack implements com.bitsyko.ApplicationInfo {
 
+    private static final String[] sSupportedActions = new String[]{
+            "org.adw.launcher.THEMES",
+            "com.gau.go.launcherex.theme"
+    };
+    private static final String[] sSupportedCategories = new String[]{
+            "com.fede.launcher.THEME_ICONPACK",
+            "com.anddoes.launcher.THEME",
+            "com.teslacoilsw.launcher.THEME"
+    };
     Context context;
     ApplicationInfo applicationInfo;
     Resources res;
+    private List<Exec> execList;
+
 
     public IconPack(String packageName, Context context) throws PackageManager.NameNotFoundException {
         this.applicationInfo = context.getPackageManager().getApplicationInfo(packageName, PackageManager.GET_META_DATA);
         this.res = context.getPackageManager().getResourcesForApplication(applicationInfo);
         this.context = context;
     }
-
 
     public static List<IconPack> getIconPacksInSystem(Activity activity) {
 
@@ -66,6 +75,27 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
         return iconPacks;
     }
 
+    private static Set<String> getSupportedPackages(Activity activity) {
+        Intent i = new Intent();
+
+        Set<String> packages = new HashSet<>();
+        PackageManager packageManager = activity.getPackageManager();
+        for (String action : sSupportedActions) {
+            i.setAction(action);
+            for (ResolveInfo r : packageManager.queryIntentActivities(i, 0)) {
+                packages.add(r.activityInfo.packageName);
+            }
+        }
+        i = new Intent(Intent.ACTION_MAIN);
+        for (String category : sSupportedCategories) {
+            i.addCategory(category);
+            for (ResolveInfo r : packageManager.queryIntentActivities(i, 0)) {
+                packages.add(r.activityInfo.packageName);
+            }
+            i.removeCategory(category);
+        }
+        return packages;
+    }
 
     public List<AppIcon> getCompatibleApps() {
 
@@ -116,7 +146,6 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
         return appList;
     }
 
-
     public String getDescription() {
         try {
             return getTextInTag(getXml("themecfg"), "themeName");
@@ -134,7 +163,6 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
             return null;
         }
     }
-
 
     public List<Drawable> getPreviewImages() {
 
@@ -250,7 +278,6 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
         return parser;
     }
 
-
     private List<String> getPreviewImagesXml(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
 
         List<String> images = new ArrayList<>();
@@ -287,7 +314,6 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
             return null;
         }
     }
-
 
     private String getFirstTagElement(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
 
@@ -378,9 +404,8 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
 
         return icon;
 
-      //  return config.keySet().size() == 1 && config.keySet().contains("scale") ? icon : config;
+        //  return config.keySet().size() == 1 && config.keySet().contains("scale") ? icon : config;
     }
-
 
     private String getTextInTag(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
 
@@ -404,7 +429,6 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
         return null;
 
     }
-
 
     private void loadResourcesFromXmlParser(XmlPullParser parser,
                                             Map<String, List<Pair<String, String>>> iconPackResources) throws XmlPullParserException, IOException {
@@ -458,48 +482,11 @@ public class IconPack implements com.bitsyko.ApplicationInfo {
         } while ((eventType = parser.next()) != XmlPullParser.END_DOCUMENT);
     }
 
-
-    private static Set<String> getSupportedPackages(Activity activity) {
-        Intent i = new Intent();
-
-        Set<String> packages = new HashSet<>();
-        PackageManager packageManager = activity.getPackageManager();
-        for (String action : sSupportedActions) {
-            i.setAction(action);
-            for (ResolveInfo r : packageManager.queryIntentActivities(i, 0)) {
-                packages.add(r.activityInfo.packageName);
-            }
-        }
-        i = new Intent(Intent.ACTION_MAIN);
-        for (String category : sSupportedCategories) {
-            i.addCategory(category);
-            for (ResolveInfo r : packageManager.queryIntentActivities(i, 0)) {
-                packages.add(r.activityInfo.packageName);
-            }
-            i.removeCategory(category);
-        }
-        return packages;
-    }
-
-    private static final String[] sSupportedActions = new String[]{
-            "org.adw.launcher.THEMES",
-            "com.gau.go.launcherex.theme"
-    };
-
-    private static final String[] sSupportedCategories = new String[]{
-            "com.fede.launcher.THEME_ICONPACK",
-            "com.anddoes.launcher.THEME",
-            "com.teslacoilsw.launcher.THEME"
-    };
-
-
-    private List<Exec> execList;
-
     public XmlPullParser getShader() {
 
-      //  if (execList == null) {
-         //   execList = getShaderXml();
-     //   }
+        //  if (execList == null) {
+        //   execList = getShaderXml();
+        //   }
 
         return getShaderXml();
     }

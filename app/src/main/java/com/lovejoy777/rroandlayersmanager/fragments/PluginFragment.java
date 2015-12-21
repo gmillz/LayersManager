@@ -46,9 +46,9 @@ import java.util.Random;
 
 public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetChangedListener {
 
+    public int sortMode;
     RecyclerView recList = null;
     CardViewAdapter ca = null;
-    public int sortMode;
     ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
         @Override
         public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
@@ -68,11 +68,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
     private CoordinatorLayout cordLayout = null;
     private SwipeRefreshLayout mSwipeRefresh;
     private Mode mode;
-
-    private enum Mode {
-        Layer,
-        IconPack
-    }
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -124,7 +119,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         return cordLayout;
     }
 
-
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
         if (i == 0) {
@@ -133,7 +127,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
             mSwipeRefresh.setEnabled(false);
         }
     }
-
 
     private void LoadRecyclerViewFabToolbar() {
         //create RecyclerView
@@ -184,7 +177,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         result.add(new Placeholder(getString(R.string.PlayStore), getString(R.string.PlayStoreMore), getResources().getDrawable(R.drawable.playstore, null)));
         return result;
     }
-
 
     //open Plugin page after clicked on a cardview
     protected void onListItemClick(int position) {
@@ -269,7 +261,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         return super.onOptionsItemSelected(item);
     }
 
-
     private void refreshList() {
 
         switch (mode) {
@@ -285,6 +276,11 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
 
     }
 
+
+    private enum Mode {
+        Layer,
+        IconPack
+    }
 
     private abstract class LoadStuff extends AsyncTask<Void, Void, List<? extends ApplicationInfo>> {
 

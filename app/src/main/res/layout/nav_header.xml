@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layout11"
     android:layout_width="match_parent"
     android:layout_height="192dp"
@@ -10,23 +9,23 @@
     android:theme="@style/ThemeOverlay.AppCompat.Dark">
 
     <TextView
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Manager"
-        android:id="@+id/textView"
-        android:layout_gravity="center_horizontal"
-        android:textSize="@dimen/textSizeDisplay1"
-        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_gravity="center_horizontal"
+        android:text="Manager"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="@dimen/textSizeDisplay1"
+        android:textStyle="bold" />
 
     <ImageView
         android:id="@+id/imVie_AppLogo"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_gravity="center_horizontal"
-        android:src="@drawable/ic_drawer_image"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_drawer_image" />
 
 </RelativeLayout>

@@ -14,9 +14,9 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
 import android.support.v13.app.FragmentCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,8 +24,16 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.R;
@@ -39,7 +47,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -83,10 +90,10 @@ public class BackupRestoreFragment extends Fragment {
         loadRecyclerView();
         loadFAB();
 
-        if (ContextCompat.checkSelfPermission(getActivity(),Manifest.permission.READ_EXTERNAL_STORAGE)
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
             askForPermission(1);
-        } else{
+        } else {
             new LoadAndSet().execute();
         }
 
@@ -143,7 +150,7 @@ public class BackupRestoreFragment extends Fragment {
 
     }
 
-    private void loadFAB(){
+    private void loadFAB() {
         fab2 = (android.support.design.widget.FloatingActionButton) cordLayout.findViewById(R.id.fab6);
         fab2.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -212,6 +219,42 @@ public class BackupRestoreFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
         menu.removeItem(R.id.menu_sort);
+    }
+
+    public void askForPermission(int mode) {
+        // Should we show an explanation?
+        if (FragmentCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            // Explain to the user why we need to read the contacts
+        }
+
+        FragmentCompat.requestPermissions(
+                this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
+        return;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    new LoadAndSet().execute();
+                } else {
+                    AlertDialog.Builder noPermissionDialog = new AlertDialog.Builder(getActivity());
+                    noPermissionDialog.setTitle(R.string.noPermission);
+                    noPermissionDialog.setMessage(R.string.noPermissionDescription);
+                    noPermissionDialog.setPositiveButton(android.R.string.yes,
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    getActivity().onBackPressed();
+                                }
+                            });
+                    noPermissionDialog.show();
+
+                }
+            }
+        }
     }
 
     //Adapter
@@ -413,42 +456,6 @@ public class BackupRestoreFragment extends Fragment {
                 TextView noOverlaysText = (TextView) cordLayout.findViewById(R.id.textView7);
                 noOverlays.setVisibility(View.VISIBLE);
                 noOverlaysText.setVisibility(View.VISIBLE);
-            }
-        }
-    }
-
-    public void askForPermission(int mode) {
-        // Should we show an explanation?
-        if (FragmentCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            // Explain to the user why we need to read the contacts
-        }
-
-        FragmentCompat.requestPermissions(
-                this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
-        return;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    new LoadAndSet().execute();
-                } else {
-                    AlertDialog.Builder noPermissionDialog = new AlertDialog.Builder(getActivity());
-                    noPermissionDialog.setTitle(R.string.noPermission);
-                    noPermissionDialog.setMessage(R.string.noPermissionDescription);
-                    noPermissionDialog.setPositiveButton(android.R.string.yes,
-                            new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            getActivity().onBackPressed();
-                        }
-                    });
-                    noPermissionDialog.show();
-
-                }
             }
         }
     }

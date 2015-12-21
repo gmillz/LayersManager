@@ -24,15 +24,12 @@ public class Overlay {
 
     private static final String TARGET_PACKAGE_TEMPLATE = "<<TARGET_PACKAGE>>";
     private static final String PACKAGE_NAME_TEMPLATE = "<<PACKAGE_NAME>>";
-
-    private HashMap<String, HashMap<String, String>> mResources = new HashMap<>();
-    private HashMap<String, ResourceParser.Style> mStyles = new HashMap<>();
-
     public String name;
     public String targetPackage;
     public String packageName;
     public File path;
-
+    private HashMap<String, HashMap<String, String>> mResources = new HashMap<>();
+    private HashMap<String, ResourceParser.Style> mStyles = new HashMap<>();
     private File manifest;
     private File res;
     private File unsignedApp;
@@ -227,7 +224,7 @@ public class Overlay {
         //app.waitFor();
     }
 
-    public void writeResources(){
+    public void writeResources() {
         clearValues();
         for (String type : ResourceParser.resourceTypes) {
             File f = new File(res + "/values-v" + Build.VERSION.SDK_INT + "/" + type + ".xml");
