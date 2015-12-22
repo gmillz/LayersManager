@@ -1,6 +1,9 @@
 package com.bitsyko.libicons;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -15,6 +18,8 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
+import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.adw.launcher.IconShader;
 import org.apache.commons.io.IOUtils;
@@ -32,27 +37,28 @@ import java.util.Map;
 
 public class AppIcon {
 
+    private static final String TAG = "AppIcon";
+
     public Overlay overlay;
-    //ClassName:Drawable
-    List<Pair<String, String>> iconList = new ArrayList<>();
+    private String mIcon;
     private ApplicationInfo applicationInfo;
-    private Resources res;
+    private Resources mAppResources;
     private Context context;
-    private IconPack iconPack;
+    private IconPackHelper iconPack;
     private boolean inPack;
 
-    public AppIcon(Context context, String packageName, IconPack iconPack, boolean inPack) throws PackageManager.NameNotFoundException {
+    public AppIcon(Context context, ComponentName cmp, IconPackHelper iconPack, boolean inPack) throws PackageManager.NameNotFoundException {
         this.context = context;
-        this.applicationInfo = context.getPackageManager().getApplicationInfo(packageName, PackageManager.GET_ACTIVITIES);
-        this.res = context.getPackageManager().getResourcesForApplication(applicationInfo);
+        this.applicationInfo = context.getPackageManager().getApplicationInfo(cmp.getPackageName(), PackageManager.GET_ACTIVITIES);
+        mAppResources = context.getPackageManager().getResourcesForApplication(applicationInfo);
         this.iconPack = iconPack;
         this.inPack = inPack;
-        overlay = new Overlay(context, packageName);
+        overlay = new Overlay(context, cmp.getPackageName());
     }
 
-    public AppIcon(Context context, String packageName, IconPack iconPack, boolean inPack, Collection<Pair<String, String>> iconList) throws PackageManager.NameNotFoundException {
-        this(context, packageName, iconPack, inPack);
-        this.iconList.addAll(iconList);
+    public AppIcon(Context context, ComponentName cmp, IconPackHelper iconPack, boolean inPack, String icon) throws PackageManager.NameNotFoundException {
+        this(context, cmp, iconPack, inPack);
+        mIcon = icon;
     }
 
     public String getPackageName() {
@@ -91,156 +97,31 @@ public class AppIcon {
             iconLocation.add(new File(string).getParent());
         }
 
-
-        Map<String, Collection<String>> installedAppsAndTheirLauncherActivities =
-                SystemApplicationHelper.getInstance(context).getInstalledAppsAndTheirLauncherActivities();
-
-
         PackageInfo packageInfo = context.getPackageManager().getPackageInfo(applicationInfo.packageName,
                 PackageManager.GET_ACTIVITIES);
 
-        Collection<String> launcherActivities = installedAppsAndTheirLauncherActivities.get(applicationInfo.packageName);
-
-        Map<String, String> iconOverlaysData = iconPack.getIconOverlaysData();
-
-
         for (android.content.pm.ActivityInfo a : packageInfo.activities) {
+            String drawableName = StringUtils.substringAfter(mAppResources.getResourceName(a.getIconResource()), "/");
+            Drawable iconDrawable = mAppResources.getDrawable(a.getIconResource(), null);
 
-            if (!(res.getDrawable(a.getIconResource(), null) instanceof BitmapDrawable)) {
-                continue;
-            }
-
-            if (!launcherActivities.contains(a.name)) {
-                continue;
-            }
-
-            String drawableName = StringUtils.substringAfter(res.getResourceName(a.getIconResource()), "/");
-            //Bitmap icon = ((BitmapDrawable) res.getDrawable(a.getIconResource(), null)).getBitmap().copy(Bitmap.Config.ARGB_8888, true);
-
-            Drawable iconDrawable = res.getDrawable(a.getIconResource(), null);
-
-            XmlPullParser shaders = iconPack.getShader();
-
-
-            IconShader.CompiledIconShader compiledIconShader = IconShader.parseXml(shaders);
-
-            Bitmap icon = ((BitmapDrawable) (iconDrawable)).getBitmap();
-
-            icon = Bitmap.createScaledBitmap(icon, 72, 72, true);
-
-            icon = IconShader.processIcon(icon, compiledIconShader);
-
-            String scale = iconOverlaysData.get("scale");
-
-            Bitmap backPicture = iconPack.getBitmapFromDrawable(iconOverlaysData.get("iconback"));
-            Bitmap uponPicture = iconPack.getBitmapFromDrawable(iconOverlaysData.get("iconupon"));
-            Bitmap maskPicture = iconPack.getBitmapFromDrawable(iconOverlaysData.get("iconmask"));
-
-            icon = icon.copy(Bitmap.Config.ARGB_8888, true);
-
-            //Scale down picture
-
-
-            int destSize = (int) (backPicture.getWidth() * Float.parseFloat(scale));
-
-            Bitmap bitmap2scaled = Bitmap.createScaledBitmap(icon, destSize, destSize, false);
-
-            Bitmap bitmap2moved = Bitmap.createBitmap(backPicture.getWidth(), backPicture.getHeight(), backPicture.getConfig());
-            Canvas canvas = new Canvas(bitmap2moved);
-
-
-            int margin = (backPicture.getWidth() - bitmap2scaled.getWidth()) / 2;
-            canvas.drawBitmap(bitmap2scaled, margin, margin, null);
-
-            icon = bitmap2moved;
-
-            if (maskPicture != null) {
-                icon = Bitmap.createScaledBitmap(icon, maskPicture.getWidth(), maskPicture.getHeight(), true);
-                icon = overlay(icon, maskPicture);
-                icon = icon.copy(Bitmap.Config.ARGB_8888, true);
-            } else {
-                Log.d("No picture", "Mask");
-            }
-
-
-            //Mask
-            for (int x = 0; x < icon.getWidth(); x++) {
-                for (int y = 0; y < icon.getHeight(); y++) {
-
-                    int color = icon.getPixel(x, y);
-
-                    int r = Color.red(color);
-                    int g = Color.green(color);
-                    int b = Color.blue(color);
-
-
-                    if (r == 0 && g == 0 && b == 0) {
-                        icon.setPixel(x, y, Color.argb(0, 0, 0, 0));
-                    }
-
-
-                }
-            }
-
-            icon = overlay(backPicture, icon).copy(Bitmap.Config.ARGB_8888, true);
-
-            //Clear rest of icon
-            for (int x = 0; x < icon.getWidth(); x++) {
-                for (int y = 0; y < icon.getHeight(); y++) {
-
-                    int alpha = Color.alpha(backPicture.getPixel(x, y));
-
-                    if (alpha == 0) {
-                        icon.setPixel(x, y, Color.argb(0, 0, 0, 0));
-                    }
-
-
-                }
-            }
-
-
-            if (uponPicture != null) {
-                icon = overlay(icon, uponPicture);
-            } else {
-                Log.d("No picture", "Upon");
-            }
-
-
-            // backPicture;
+            Bitmap icon = IconUtils.createIconBitmap(iconDrawable, context, iconPack);
 
             for (String location : iconLocation) {
-
-                File destFile = new File(context.getCacheDir() + "/tempFolder/" + applicationInfo.packageName + "/" + location + "/" + drawableName + ".png");
+                Log.d("TEST", "location=" + location);
+                File destFile = new File(overlay.path + "/" + location + "/" + drawableName + ".png");
 
                 destFile.getParentFile().mkdirs();
 
                 FileOutputStream out = new FileOutputStream(destFile);
                 icon.compress(Bitmap.CompressFormat.PNG, 100, out);
-
                 out.close();
-
             }
-
-
         }
 
         overlay.create();
     }
 
-    private Bitmap overlay(Bitmap bmp1, Bitmap bmp2) {
-        Bitmap bmOverlay = Bitmap.createBitmap(bmp1.getWidth(), bmp1.getHeight(), bmp1.getConfig());
-        Canvas canvas = new Canvas(bmOverlay);
-        canvas.drawBitmap(bmp1, new Matrix(), null);
-        canvas.drawBitmap(bmp2, 0, 0, null);
-        return bmOverlay;
-    }
-
-
     public void installInPack() throws Exception {
-
-        //Assumption: Icons are in the same folder as launcher icon
-
-
         List<String> list = getApplicationIcons();
 
         if (list.isEmpty()) {
@@ -270,66 +151,51 @@ public class AppIcon {
         }
 
         for (android.content.pm.ActivityInfo a : packageInfo.activities) {
+            Log.d("TEST", "iconResource=" + appResources.getResourceName(a.getIconResource()));
             activitiesWithIcons.put(a.name, StringUtils.substringAfter(appResources.getResourceName(a.getIconResource()), "/"));
         }
+
+        Intent intent = context.getPackageManager().getLaunchIntentForPackage(getPackageName());
+        ActivityInfo aInfo = context.getPackageManager().getActivityInfo(intent.getComponent(), 0);
 
 
         Log.d("App Icon", appIcon);
         Log.d("Icon locations", String.valueOf(iconLocation));
         Log.d("Activities", String.valueOf(activitiesWithIcons));
 
+        int iconId = iconPack.getResourceIdForActivityIcon(aInfo);
 
-        for (Pair<String, String> activityWithIcon : iconList) {
-
-            if (!activitiesWithIcons.keySet().contains(activityWithIcon.first)) {
-                continue;
-            }
-
-            String iconName = activitiesWithIcons.get(activityWithIcon.first);
-
-            int drawableIconID = iconPackResources.getIdentifier(activityWithIcon.second, "drawable", iconPack.getPackageName());
-            int mipmapIconID = iconPackResources.getIdentifier(activityWithIcon.second, "mipmap", iconPack.getPackageName());
-
-            if (drawableIconID == 0 && mipmapIconID == 0) {
-                Log.e("No icon in iconpack", activityWithIcon.second);
-                continue;
-            }
-
-            int finalIconID = drawableIconID == 0 ? mipmapIconID : drawableIconID;
-
-            BitmapDrawable icon;
+            BitmapDrawable icon = null;
 
             try {
-                icon = (BitmapDrawable) iconPackResources.getDrawable(finalIconID, null);
+                icon = (BitmapDrawable) iconPackResources.getDrawable(iconId, null);
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e("No icon for", activityWithIcon.first + " " + activityWithIcon.second);
                 Log.e("Vector", "Not supported");
-                continue;
             }
 
             if (icon == null) {
-                Log.d("Missing resource", activityWithIcon.second);
-                continue;
+                Log.d("Missing resource", mIcon);
             }
 
 
             for (String location : iconLocation) {
 
-                File destFile = new File(context.getCacheDir() + "/tempFolder/" + getPackageName() + "/" + location + "/" + iconName + ".png");
+                File destFile = new File(overlay.path + "/" + location + "/" + appIcon + ".png");
 
-                destFile.getParentFile().mkdirs();
+                if (!destFile.getParentFile().exists()) {
+                    if (!destFile.getParentFile().mkdirs()) {
+                        Log.d(TAG, "cannot create: " + destFile.getAbsolutePath());
+                    }
+                }
 
-                FileOutputStream out = new FileOutputStream(destFile);
-                icon.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
-
-                out.close();
+                if (icon != null) {
+                    FileOutputStream out = new FileOutputStream(destFile);
+                    icon.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
+                    out.close();
+                }
 
             }
-
-
-        }
-
 
         if (!(new File(context.getCacheDir() + "/tempFolder/"
                 + getPackageName() + "/" + list.get(0)).exists())) {

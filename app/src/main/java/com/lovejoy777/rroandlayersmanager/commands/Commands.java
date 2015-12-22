@@ -456,19 +456,13 @@ public class Commands {
                     try {
                         FileUtils.copyURLToFile(new URL(url), appt);
 
-                        Process checkAapt = Runtime.getRuntime().exec(new String[]{
-                                appt.getAbsolutePath(), "v"});
+                        Utils.CommandOutput output = Utils.runCommand(appt.getAbsolutePath() + " v", false);
 
-                        String data = IOUtils.toString(checkAapt.getInputStream());
-                        String error = IOUtils.toString(checkAapt.getErrorStream());
-
-                        checkAapt.waitFor();
-
-                        if (StringUtils.isEmpty(error)) {
-                            Log.d("AAPT", data);
+                        if (output != null && StringUtils.isEmpty(output.error)) {
+                            Log.d("AAPT", output.output);
                             break;
                         }
-                    } catch (IOException | InterruptedException e) {
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
@@ -486,7 +480,6 @@ public class Commands {
                     publishProgress(e.getMessage());
                 }
             }
-
             Log.d("Icon", "Moving");
             return null;
         }

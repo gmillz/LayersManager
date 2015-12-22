@@ -5,6 +5,8 @@ import android.util.Log;
 
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -19,13 +21,19 @@ import java.io.OutputStream;
  */
 public class Utils {
 
+    public static class CommandOutput {
+        public String output;
+        public String error;
+        public int exitCode;
+    }
+
     public static boolean deleteFile(String path) {
         if (!isRootAvailable()) return false;
         try {
             if (new File(path).isDirectory()) {
-                runCommand("rm -rf '" + path + "'\n");
+                runCommand("rm -rf '" + path + "'\n", true);
             } else {
-                runCommand("rm -rf '" + path + "'\n");
+                runCommand("rm -rf '" + path + "'\n", true);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -37,7 +45,7 @@ public class Utils {
     public static boolean createFolder(File folder) {
         if (!isRootAvailable()) return false;
         remount("rw");
-        runCommand("mkdir " + folder.getPath());
+        runCommand("mkdir " + folder.getPath(), true);
         remount("ro");
         return true;
     }
@@ -49,7 +57,7 @@ public class Utils {
     public static boolean applyPermissions(File file, String perms) {
         try {
             runCommand("chmod -R " + perms + " "
-                    + file.getAbsolutePath());
+                    + file.getAbsolutePath(), true);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -61,7 +69,9 @@ public class Utils {
     public static boolean moveFile(String old, String newDir) {
         if (!isRootAvailable()) return false;
         try {
-            runCommand("mv -f " + old + " " + newDir);
+            remount("rw");
+            runCommand("mv -f " + old + " " + newDir, true);
+            remount("ro");
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -72,7 +82,9 @@ public class Utils {
     public static boolean copyFile(String old, String newFile) {
         if (!isRootAccessAvailable()) return false;
         try {
-            runCommand("cp " + old + " " + newFile);
+            remount("rw");
+            runCommand("cp " + old + " " + newFile, true);
+            remount("ro");
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -80,42 +92,37 @@ public class Utils {
         return new File(newFile).exists();
     }
 
-    public static BufferedReader runCommand(String cmd) {
+    public static CommandOutput runCommand(String cmd, boolean useRoot) {
         if (!isRootAvailable()) return null;
-        BufferedReader reader;
+        CommandOutput output = new CommandOutput();
         try {
-            Process process = Runtime.getRuntime().exec("su");
+            Process process = Runtime.getRuntime().exec(useRoot ? "su" : "sh");
             DataOutputStream os = new DataOutputStream(
                     process.getOutputStream());
             os.writeBytes(cmd + "\n");
             os.writeBytes("exit\n");
-            reader = new BufferedReader(new InputStreamReader(
-                    process.getInputStream()));
             String err = (new BufferedReader(new InputStreamReader(
                     process.getErrorStream()))).readLine();
             os.flush();
 
-            if (process.waitFor() != 0 || (!"".equals(err) && null != err)) {
+            output.exitCode = process.waitFor();
+            if (output.exitCode != 0 || (!"".equals(err) && null != err)) {
                 Log.e("Root Error, cmd: " + cmd, err);
                 return null;
             }
-            return reader;
+            output.output = IOUtils.toString(process.getInputStream());
+            output.error = IOUtils.toString(process.getErrorStream());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
+        return output;
     }
 
     public static boolean remount(String mountType) {
         if (!isRootAvailable()) return false;
         String folder = DeviceSingleton.getInstance().getMountFolder();
-        BufferedReader reader = runCommand("mount -o remount," + mountType + " " + folder + "\n");
-        try {
-            if (reader != null) reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
+        runCommand("mount -o remount," + mountType + " " + folder + "\n", true);
         return true;
     }
 

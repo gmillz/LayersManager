@@ -33,7 +33,7 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.bitsyko.libicons.AppIcon;
-import com.bitsyko.libicons.IconPack;
+import com.bitsyko.libicons.IconPackHelper;
 import com.lovejoy777.rroandlayersmanager.AsyncResponse;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
@@ -47,8 +47,7 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
 
     private CheckBox dontShowAgain;
     private ArrayList<CheckBox> checkBoxes = new ArrayList<>();
-    private String choosedStyle = "";
-    private IconPack iconPack;
+    private IconPackHelper iconPack;
     private Switch installEverything;
     private FloatingActionButton installationFAB;
     private CoordinatorLayout cordLayout;
@@ -139,8 +138,9 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
         Toolbar toolbar = (Toolbar) cordLayout.findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_action_back);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_action_back);
-
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_action_back);
+        }
 
         installationFAB.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -163,13 +163,7 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
 
     private void receiveIntent() {
         String layerPackageName = getIntent().getStringExtra("PackageName");
-        try {
-            iconPack = new IconPack(layerPackageName, getApplicationContext());
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-            throw new RuntimeException();
-        }
-
+        iconPack = new IconPackHelper(this, layerPackageName);
         Log.d("PackageName: ", layerPackageName);
     }
 
@@ -246,11 +240,6 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
         imageLoader.execute();
     }
 
-    //If FAB is clicked
-    private void installTheme() {
-        installDialog();
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -314,7 +303,7 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
         //if (showInstallationConfirmDialog()) {
         AlertDialog.Builder installdialog = new AlertDialog.Builder(this);
         final LayoutInflater inflater = getLayoutInflater();
-        View dontShowAgainLayout = inflater.inflate(R.layout.dialog_donotshowagain, null);
+        View dontShowAgainLayout = View.inflate(this, R.layout.dialog_donotshowagain, null);
         dontShowAgain = (CheckBox) dontShowAgainLayout.findViewById(R.id.skip);
 
         installdialog.setView(dontShowAgainLayout);
@@ -350,18 +339,12 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
         List<AppIcon> iconsToInstall = new ArrayList<>();
 
         for (CheckBox checkBox : checkBoxes) {
-
             if (checkBox.isChecked()) {
                 iconsToInstall.add((AppIcon) checkBox.getTag());
             }
-
         }
 
-        Log.d("Choosed color", choosedStyle);
-
         new Commands.InstallIcons(this, iconsToInstall, this).execute();
-
-
     }
 
     @Override
@@ -398,8 +381,10 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
         protected Void doInBackground(Void... params) {
             List<Drawable> drawables = iconPack.getPreviewImages();
 
-            for (Drawable drawable : drawables) {
-                publishProgress(drawable);
+            if (drawables != null) {
+                for (Drawable drawable : drawables) {
+                    publishProgress(drawable);
+                }
             }
 
             return null;
@@ -409,6 +394,7 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
         protected void onProgressUpdate(Drawable... values) {
 
             for (Drawable screenshot : values) {
+                if (screenshot == null) continue;
 
                 ImageView screenshotImageView;
 
@@ -477,7 +463,8 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
 
                 CheckBox check = new CheckBox(IconPackDetailActivity.this);
 
-                check.setText(app.getName() + " (" + app.getPackageName() + ")");
+                String text = (app.getName() + " (" + app.getPackageName() + ")");
+                check.setText(text);
                 check.setTag(app);
 
                 check.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
