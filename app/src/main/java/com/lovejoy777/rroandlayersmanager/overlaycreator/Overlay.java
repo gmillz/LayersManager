@@ -61,7 +61,11 @@ public class Overlay {
         manifest = new File(path + File.separator + "AndroidManifest.xml");
         res = new File(path + File.separator + "res");
         unsignedApp = new File(path + File.separator + packageName + "_unsigned.apk");
-        signedApp = new File(context.getCacheDir() + File.separator + packageName + "_signed.apk");
+        signedApp = new File(path + File.separator + packageName + "_signed.apk");
+
+        if (this.path.exists()){
+            this.path.delete();
+        }
 
         if (!res.mkdirs()) {
             Log.e(TAG, "cannot create " + res.getAbsolutePath());
@@ -183,7 +187,7 @@ public class Overlay {
             createManifest();
             createUnsignedPackage();
             signPackage();
-            install();
+            //install();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -200,27 +204,14 @@ public class Overlay {
 
     private void createUnsignedPackage() throws IOException, InterruptedException {
         Log.d("TEST", "createUnsignedPackage");
+        creator.aapt.setExecutable(true, false);
         unsignedApp.getParentFile().mkdirs();
-        String command = creator.aapt.getAbsolutePath() + " package "
+        String command = creator.aapt.getAbsolutePath() + " package -f "
                 + "-M " + manifest.getAbsolutePath()
                 + " -S " + res.getAbsolutePath()
                 + " -I /system/framework/framework-res.apk"
                 + " -F " + unsignedApp.getAbsolutePath();
-        unsignedApp.setWritable(true);
-        unsignedApp.setReadable(true);
-        /*Process app = Runtime.getRuntime().exec(new String[]{
-                creator.aapt.getAbsolutePath(), "p",
-                "-M", manifest.getAbsolutePath(),
-                "-S", res.getAbsolutePath(),
-                "-I", "system/framework/framework-res.apk",
-                "-F", unsignedApp.getAbsolutePath()});*/
-
         Utils.runCommand(command, false);
-
-        //IOUtils.toString(app.getInputStream());
-        //IOUtils.toString(app.getErrorStream());
-
-        //app.waitFor();
     }
 
     public void writeResources() {
@@ -242,7 +233,6 @@ public class Overlay {
             try {
                 FileUtils.writeStringToFile(f, content);
             } catch (IOException e) {
-                // ignore
             }
             Log.d("TEST", "content= \n" + content);
         }
@@ -261,17 +251,24 @@ public class Overlay {
     private void signPackage() throws ClassNotFoundException,
             IllegalAccessException, InstantiationException, GeneralSecurityException, IOException {
 
+        Log.d(TAG, "signing package");
         signedApp.getParentFile().mkdirs();
         ZipSigner zipSigner = new ZipSigner();
         zipSigner.setKeymode("testkey");
         zipSigner.signZip(unsignedApp.getAbsolutePath(), signedApp.getAbsolutePath());
+        Log.d(TAG, "finished signing package");
     }
 
     public void install() {
         Log.d("TEST", "installing overlay");
-        Utils.moveFile(signedApp.getAbsolutePath(),
-                DeviceSingleton.getInstance().getOverlayFolder()
-                        + File.separator + signedApp.getName());
 
+        File output = new File(DeviceSingleton.getInstance().getOverlayFolder()
+                + File.separator + signedApp.getName());
+
+        Utils.moveFile(signedApp.getAbsolutePath(), output.getAbsolutePath());
+
+        Utils.remount("rw");
+        Utils.applyPermissions(output.getAbsolutePath(), "644");
+        Utils.remount("ro");
     }
 }

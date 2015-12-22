@@ -22,7 +22,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.bitsyko.libicons.IconPack;
+import com.bitsyko.libicons.IconPackHelper;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.activities.AboutActivity;
 import com.lovejoy777.rroandlayersmanager.activities.DetailedTutorialActivity;
@@ -358,7 +358,7 @@ public class menu extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void openIconPackDetailActivity(IconPack iconPack) {
+    public void openIconPackDetailActivity(IconPackHelper.IconPackInfo iconPack) {
         Bundle args = new Bundle();
         args.putString("PackageName", iconPack.getPackageName());
 

@@ -31,7 +31,7 @@ import android.widget.Toast;
 
 import com.bitsyko.ApplicationInfo;
 import com.bitsyko.Placeholder;
-import com.bitsyko.libicons.IconPack;
+import com.bitsyko.libicons.IconPackHelper;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.adapters.CardViewAdapter;
@@ -40,9 +40,11 @@ import com.lovejoy777.rroandlayersmanager.helper.RecyclerItemClickListener;
 import com.lovejoy777.rroandlayersmanager.menu;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetChangedListener {
 
@@ -184,7 +186,7 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
             if (mode == Mode.Layer) {
                 ((menu) getActivity()).openOverlayDetailActivity((Layer) ca.getLayerFromPosition(position));
             } else if (mode == Mode.IconPack) {
-                ((menu) getActivity()).openIconPackDetailActivity((IconPack) ca.getLayerFromPosition(position));
+                ((menu) getActivity()).openIconPackDetailActivity((IconPackHelper.IconPackInfo) ca.getLayerFromPosition(position));
             }
 
 
@@ -337,20 +339,26 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         @Override
         protected List<? extends ApplicationInfo> doInBackground(Void... params) {
 
-            List<IconPack> layerList = IconPack.getIconPacksInSystem(PluginFragment.this.getActivity());
+            Collection<IconPackHelper.IconPackInfo> layerList =
+                    IconPackHelper.getSupportedPackages(PluginFragment.this.getActivity()).values();
+            List<IconPackHelper.IconPackInfo> layers = new ArrayList<>();
+
+            for (IconPackHelper.IconPackInfo info : layerList) {
+                layers.add(info);
+            }
 
             sortMode = Commands.getSortMode(getActivity());
 
             //We don't have developer in icon pack
             if (sortMode == 1 || sortMode == 2) {
                 //Alphabetically NAME
-                Collections.sort(layerList, ApplicationInfo.compareName);
+                Collections.sort(layers, ApplicationInfo.compareName);
             } else if (sortMode == 3) {
                 //RANDOM
-                Collections.shuffle(layerList, new Random());
+                Collections.shuffle(layers, new Random());
             }
 
-            return layerList;
+            return layers;
         }
 
     }

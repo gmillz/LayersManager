@@ -7,6 +7,7 @@ import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 
 import org.apache.commons.io.IOUtils;
 
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,6 +16,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class Utils {
+
+    public static class CommandOutput {
+        public String output;
+        public String error;
+        public int exitCode;
+    }
 
     public static boolean deleteFile(String path) {
         if (!isRootAvailable()) return false;
@@ -82,7 +89,6 @@ public class Utils {
     public static CommandOutput runCommand(String cmd, boolean useRoot) {
         if (!isRootAvailable()) return null;
         CommandOutput output = new CommandOutput();
-        Log.d("TEST", "command=" + cmd);
         try {
             Process process = Runtime.getRuntime().exec(useRoot ? "su" : "sh");
             DataOutputStream os = new DataOutputStream(
@@ -177,11 +183,5 @@ public class Utils {
         while ((read = in.read(buffer)) != -1) {
             out.write(buffer, 0, read);
         }
-    }
-
-    public static class CommandOutput {
-        public String output;
-        public String error;
-        public int exitCode;
     }
 }
