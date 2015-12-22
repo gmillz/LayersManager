@@ -222,17 +222,9 @@ public class IconPackHelper {
             if (intent == null) continue;
             ComponentName cmp = intent.getComponent();
             boolean appInIconPack = getResourceIdForActivityIcon(cmp) != 0;
-            boolean overlayIcons = canOverlayIcons();
 
             try {
-                if (appInIconPack) {
-                    appList.add(new AppIcon(mContext, cmp, this, true,
-                            mIconPackResources.get(cmp)));
-                } else {
-                    if (installedPackagesWithLauncher.contains(cmp.getPackageName()) && overlayIcons) {
-                        appList.add(new AppIcon(mContext, cmp, this, false));
-                    }
-                }
+                appList.add(new AppIcon(mContext, cmp, this, appInIconPack));
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }

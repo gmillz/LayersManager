@@ -107,7 +107,7 @@ public class menu extends AppCompatActivity {
 
         loadToolbarNavDrawer();
 
-        if (Utils.isRootAccessAvailable()) {
+        if (!Utils.isRootAccessAvailable()) {
             Toast.makeText(this, getString(R.string.noRoot), Toast.LENGTH_LONG).show();
         } else {
             createImportantDirectories();

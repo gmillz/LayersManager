@@ -7,18 +7,13 @@ import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 
 import org.apache.commons.io.IOUtils;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 
-/**
- * Created by griff on 12/16/2015.
- */
 public class Utils {
 
     public static class CommandOutput {
@@ -101,20 +96,18 @@ public class Utils {
                     process.getOutputStream());
             os.writeBytes(cmd + "\n");
             os.writeBytes("exit\n");
-            String err = (new BufferedReader(new InputStreamReader(
-                    process.getErrorStream()))).readLine();
             os.flush();
 
             output.exitCode = process.waitFor();
-            if (output.exitCode != 0 || (!"".equals(err) && null != err)) {
-                Log.e("Root Error, cmd: " + cmd, err);
-                return null;
-            }
             output.output = IOUtils.toString(process.getInputStream());
             output.error = IOUtils.toString(process.getErrorStream());
+            if (output.exitCode != 0 || (!"".equals(output.error) && null != output.error)) {
+                Log.e("Root Error, cmd: " + cmd, output.error);
+                return output;
+            }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            return null;
+            return output;
         }
         return output;
     }
@@ -128,7 +121,8 @@ public class Utils {
 
     public static boolean isRootAccessAvailable() {
         if (!isRootAvailable()) return false;
-        return true;
+        CommandOutput co = runCommand("echo \"\"", true);
+        return co != null && co.exitCode == 0;
     }
 
     public static boolean isRootAvailable() {

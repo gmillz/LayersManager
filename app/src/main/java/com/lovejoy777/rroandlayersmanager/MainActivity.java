@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (Utils.isRootAccessAvailable()) {
+        if (!Utils.isRootAccessAvailable()) {
             Toast.makeText(MainActivity.this, R.string.noRoot, Toast.LENGTH_LONG).show();
         }
 
