@@ -7,7 +7,6 @@ import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 
 import org.apache.commons.io.IOUtils;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -100,7 +99,6 @@ public class Utils {
             output.exitCode = process.waitFor();
             output.output = IOUtils.toString(process.getInputStream());
             output.error = IOUtils.toString(process.getErrorStream());
-            Log.d("TEST", "error=\n" + output.error + "\nout=\n" + output.output);
             if (output.exitCode != 0 || (!"".equals(output.error) && null != output.error)) {
                 Log.e("Root Error, cmd: " + cmd, output.error);
                 return output;
