@@ -4,15 +4,15 @@ import android.graphics.drawable.Drawable;
 
 import java.util.Comparator;
 
-public interface ApplicationInfo {
+public interface LayerInfo {
 
-    Comparator<ApplicationInfo> compareName = new Comparator<ApplicationInfo>() {
-        public int compare(ApplicationInfo layer1, ApplicationInfo layer2) {
+    Comparator<LayerInfo> compareName = new Comparator<LayerInfo>() {
+        public int compare(LayerInfo layer1, LayerInfo layer2) {
             return layer1.getName().compareToIgnoreCase(layer2.getName());
         }
     };
-    Comparator<ApplicationInfo> compareDev = new Comparator<ApplicationInfo>() {
-        public int compare(ApplicationInfo layer1, ApplicationInfo layer2) {
+    Comparator<LayerInfo> compareDev = new Comparator<LayerInfo>() {
+        public int compare(LayerInfo layer1, LayerInfo layer2) {
             return layer1.getDeveloper().compareToIgnoreCase(layer2.getDeveloper());
         }
     };
@@ -24,6 +24,4 @@ public interface ApplicationInfo {
     Drawable getIcon();
 
     String getPackageName();
-
-
 }

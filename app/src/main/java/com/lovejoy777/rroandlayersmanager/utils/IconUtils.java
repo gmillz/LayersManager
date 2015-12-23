@@ -1,5 +1,6 @@
 package com.lovejoy777.rroandlayersmanager.utils;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -12,17 +13,83 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.PaintDrawable;
+import android.os.AsyncTask;
 import android.support.v7.graphics.Palette;
 
-import com.bitsyko.libicons.IconPackHelper;
+import com.bitsyko.libicons.AppIcon;
+import com.bitsyko.libicons.IconPack;
+import com.lovejoy777.rroandlayersmanager.R;
+
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class IconUtils {
 
     private static final Canvas sCanvas = new Canvas();
     private static final Rect sOldBounds = new Rect();
 
+    public interface Callback {
+        void onInstallFinish();
+    }
+
+    private static ProgressDialog mProgressDialog;
+    private static Executor mExecutor = Executors.newFixedThreadPool(8);
+    private static Callback sCallback;
+
+    public static void installIcons(Context context, List<AppIcon> list, Callback callback) {
+        if (callback != null) sCallback = callback;
+        mProgressDialog = new ProgressDialog(context);
+        mProgressDialog.setTitle(R.string.installingOverlays);
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setProgress(0);
+        mProgressDialog.setCancelable(false);
+        mProgressDialog.setMax(list.size());
+        mProgressDialog.show();
+        Utils.remount("rw");
+        for (AppIcon app : list) {
+            new InstallAppIcon(app).executeOnExecutor(mExecutor);
+        }
+        Utils.remount("ro");
+    }
+
+    private static void progressUpdate() {
+        if (mProgressDialog != null) {
+            int progress = mProgressDialog.getProgress() + 1;
+            mProgressDialog.setProgress(progress);
+            if (mProgressDialog.getMax() == mProgressDialog.getProgress()) {
+                mProgressDialog.dismiss();
+                if (sCallback != null) sCallback.onInstallFinish();
+            }
+        }
+    }
+
+    public static class InstallAppIcon extends AsyncTask<Void, String, Void> {
+        private AppIcon appIcon;
+
+        public InstallAppIcon(AppIcon appIcon) {
+            this.appIcon = appIcon;
+        }
+
+        @Override
+        protected Void doInBackground(Void... a) {
+            try {
+                appIcon.install();
+                appIcon.overlay.install();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(Void v) {
+            progressUpdate();
+        }
+    }
+
     public static Bitmap createIconBitmap(Drawable icon, Context context,
-                                          IconPackHelper iconPack) {
+                                          IconPack iconPack) {
         synchronized (sCanvas) {
             final int iconBitmapSize = icon.getMinimumWidth();
 
@@ -36,7 +103,7 @@ public class IconUtils {
             float translationY = 0;
             int defaultSwatchColor = 0;
             int backTintColor = 0;
-            IconPackHelper.SwatchType swatchType = IconPackHelper.SwatchType.None;
+            IconPack.SwatchType swatchType = IconPack.SwatchType.None;
             float[] colorFilter = null;
 
             if (iconPack != null) {
@@ -91,7 +158,7 @@ public class IconUtils {
             final int left = (textureWidth - width) / 2;
             final int top = (textureHeight - height) / 2;
 
-            if (swatchType != null && swatchType != IconPackHelper.SwatchType.None) {
+            if (swatchType != null && swatchType != IconPack.SwatchType.None) {
                 Palette palette = Palette.from(bitmap).generate();
                 switch (swatchType) {
                     case Vibrant:
@@ -143,7 +210,7 @@ public class IconUtils {
                 iconMask.draw(canvas);
             }
             Drawable back = null;
-            if (swatchType != null && swatchType != IconPackHelper.SwatchType.None) {
+            if (swatchType != null && swatchType != IconPack.SwatchType.None) {
                 back = iconPaletteBack;
                 defaultSwatchColor = iconPack.getDefaultSwatchColor();
             } else if (iconBack != null) {

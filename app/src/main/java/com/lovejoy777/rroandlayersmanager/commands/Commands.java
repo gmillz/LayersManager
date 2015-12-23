@@ -20,7 +20,6 @@ import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedInputStream;
@@ -31,6 +30,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -363,6 +364,46 @@ public class Commands {
             }
         }
 
+    }
+
+    public static class CheckAapt extends AsyncTask<Void, Void, Void> {
+
+        Context context;
+
+        public CheckAapt(Context context) {
+            this.context = context;
+        }
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                FileUtils.deleteDirectory(new File(context.getCacheDir() + "/tempFolder/"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            //Downloading aapt
+            File aapt = new File(context.getCacheDir() + "/aapt");
+
+            if (!aapt.exists()) {
+                for (String url : aaptUrls) {
+                    try {
+                        FileUtils.copyURLToFile(new URL(url), aapt);
+
+                        Utils.CommandOutput output =
+                                Utils.runCommand(aapt.getAbsolutePath() + " v", false);
+
+                        if (output != null && StringUtils.isEmpty(output.error)) {
+                            break;
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            Utils.applyPermissions(aapt.getAbsolutePath(), "700");
+
+            return null;
+        }
     }
 
     public static class InstallIcons extends AsyncTask<Void, String, Void> {

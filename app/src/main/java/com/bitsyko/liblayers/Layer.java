@@ -15,6 +15,7 @@ import android.util.ArrayMap;
 import android.util.Log;
 import android.util.Pair;
 
+import com.bitsyko.LayerInfo;
 import com.bitsyko.liblayers.layerfiles.CMTEOverlay;
 import com.bitsyko.liblayers.layerfiles.ColorOverlay;
 import com.bitsyko.liblayers.layerfiles.CustomStyleOverlay;
@@ -43,7 +44,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
+public class Layer implements Closeable, LayerInfo {
     private static final String ACTION_PICK_PLUGIN = "com.layers.plugins.PICK_OVERLAYS";
 
     // Theme asset paths
@@ -179,7 +180,6 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
             manifestInputStream = zip.getInputStream(zip.getEntry("AndroidManifest.xml"));
             array = IOUtils.toByteArray(manifestInputStream);
             String manifest = AndroidXMLDecompress.decompressXML(array);
-            Log.d("TEST", "test=\n" + manifest);
             XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
             parser.setInput(IOUtils.toInputStream(manifest), null);
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
@@ -199,7 +199,6 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
                                     packageInfo.dev = appContext.getResources().getString(Integer.parseInt(v));
                                 }
                                 packageInfo.cmTheme = true;
-                                Log.d("TEST", "name=" + packageInfo.name + " : author=" + packageInfo.dev);
                             }
                         }
                     }
@@ -216,19 +215,10 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
         List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
         for (ApplicationInfo info : apps) {
-            try {
-                Context appContext = context.createPackageContext(info.packageName, 0);
-                ApplicationInfo ai = appContext.getApplicationInfo();
-                CMPackageInfo packageInfo = getMetaData(context, info);
-                if (packageInfo.cmTheme) {
-                    Layer layer = layerFromCMTETheme(info.packageName, context);
-                    if (layer != null) layers.add(layer);
-                }
-                if (ai.metaData != null) {
-                    Log.d("TEST", "name=" + ai.metaData.getString("org.cyanogenmod.theme.name"));
-                }
-            } catch (PackageManager.NameNotFoundException e) {
-                // ignore
+            CMPackageInfo packageInfo = getMetaData(context, info);
+            if (packageInfo.cmTheme) {
+                Layer layer = layerFromCMTETheme(info.packageName, context);
+                if (layer != null) layers.add(layer);
             }
         }
     }

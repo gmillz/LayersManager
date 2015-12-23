@@ -34,6 +34,7 @@ public class Overlay {
     private File res;
     private File unsignedApp;
     private File signedApp;
+    private File vendorApp;
 
     private Context context;
     private Creator creator;
@@ -62,9 +63,13 @@ public class Overlay {
         res = new File(path + File.separator + "res");
         unsignedApp = new File(path + File.separator + packageName + "_unsigned.apk");
         signedApp = new File(path + File.separator + packageName + "_signed.apk");
+        vendorApp = new File(DeviceSingleton.getInstance().getOverlayFolder()
+                + File.separator + signedApp.getName());
 
-        if (this.path.exists()){
-            this.path.delete();
+        if (this.path.exists()) {
+            if (this.path.delete()) {
+                Log.e(TAG, "cannot create " + this.path.getAbsolutePath());
+            }
         }
 
         if (!res.mkdirs()) {
@@ -262,13 +267,13 @@ public class Overlay {
     public void install() {
         Log.d("TEST", "installing overlay");
 
-        File output = new File(DeviceSingleton.getInstance().getOverlayFolder()
-                + File.separator + signedApp.getName());
-
-        Utils.moveFile(signedApp.getAbsolutePath(), output.getAbsolutePath());
+        if (vendorApp.exists()) {
+            vendorApp.delete();
+        }
 
         Utils.remount("rw");
-        Utils.applyPermissions(output.getAbsolutePath(), "644");
+        Utils.moveFile(signedApp.getAbsolutePath(), vendorApp.getAbsolutePath());
+        Utils.applyPermissions(vendorApp.getAbsolutePath(), "644");
         Utils.remount("ro");
     }
 }

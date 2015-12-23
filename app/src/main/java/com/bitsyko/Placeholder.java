@@ -2,7 +2,7 @@ package com.bitsyko;
 
 import android.graphics.drawable.Drawable;
 
-public class Placeholder implements ApplicationInfo {
+public class Placeholder implements LayerInfo {
 
     String name;
     String developer;

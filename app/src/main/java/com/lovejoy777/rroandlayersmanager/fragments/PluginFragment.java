@@ -29,9 +29,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bitsyko.ApplicationInfo;
+import com.bitsyko.LayerInfo;
 import com.bitsyko.Placeholder;
-import com.bitsyko.libicons.IconPackHelper;
+import com.bitsyko.libicons.IconPack;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.adapters.CardViewAdapter;
@@ -44,7 +44,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetChangedListener {
 
@@ -186,7 +185,7 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
             if (mode == Mode.Layer) {
                 ((menu) getActivity()).openOverlayDetailActivity((Layer) ca.getLayerFromPosition(position));
             } else if (mode == Mode.IconPack) {
-                ((menu) getActivity()).openIconPackDetailActivity((IconPackHelper.IconPackInfo) ca.getLayerFromPosition(position));
+                ((menu) getActivity()).openIconPackDetailActivity((IconPack.IconPackInfo) ca.getLayerFromPosition(position));
             }
 
 
@@ -284,14 +283,14 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         IconPack
     }
 
-    private abstract class LoadStuff extends AsyncTask<Void, Void, List<? extends ApplicationInfo>> {
+    private abstract class LoadStuff extends AsyncTask<Void, Void, List<? extends LayerInfo>> {
 
         protected void onPreExecute() {
             mSwipeRefresh.setRefreshing(true);
         }
 
 
-        protected void onPostExecute(List<? extends ApplicationInfo> result) {
+        protected void onPostExecute(List<? extends LayerInfo> result) {
 
             if (result.size() > 0) {
                 ca = new CardViewAdapter(result);
@@ -312,17 +311,17 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
     private class FillPluginList extends LoadStuff {
 
         @Override
-        protected List<? extends ApplicationInfo> doInBackground(Void... params) {
+        protected List<? extends LayerInfo> doInBackground(Void... params) {
 
             List<Layer> layerList = Layer.getLayersInSystem(PluginFragment.this.getActivity());
 
             sortMode = Commands.getSortMode(getActivity());
             if (sortMode == 1) {
                 //Alphabetically NAME
-                Collections.sort(layerList, ApplicationInfo.compareName);
+                Collections.sort(layerList, LayerInfo.compareName);
             } else if (sortMode == 2) {
                 //Alphabetically DEVELOPER
-                Collections.sort(layerList, ApplicationInfo.compareDev);
+                Collections.sort(layerList, LayerInfo.compareDev);
             } else if (sortMode == 3) {
                 //RANDOM
                 Collections.shuffle(layerList, new Random());
@@ -337,13 +336,13 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
     private class FillIconPackList extends LoadStuff {
 
         @Override
-        protected List<? extends ApplicationInfo> doInBackground(Void... params) {
+        protected List<? extends LayerInfo> doInBackground(Void... params) {
 
-            Collection<IconPackHelper.IconPackInfo> layerList =
-                    IconPackHelper.getSupportedPackages(PluginFragment.this.getActivity()).values();
-            List<IconPackHelper.IconPackInfo> layers = new ArrayList<>();
+            Collection<IconPack.IconPackInfo> layerList =
+                    IconPack.getSupportedPackages(PluginFragment.this.getActivity()).values();
+            List<IconPack.IconPackInfo> layers = new ArrayList<>();
 
-            for (IconPackHelper.IconPackInfo info : layerList) {
+            for (IconPack.IconPackInfo info : layerList) {
                 layers.add(info);
             }
 
@@ -352,7 +351,7 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
             //We don't have developer in icon pack
             if (sortMode == 1 || sortMode == 2) {
                 //Alphabetically NAME
-                Collections.sort(layers, ApplicationInfo.compareName);
+                Collections.sort(layers, LayerInfo.compareName);
             } else if (sortMode == 3) {
                 //RANDOM
                 Collections.shuffle(layers, new Random());

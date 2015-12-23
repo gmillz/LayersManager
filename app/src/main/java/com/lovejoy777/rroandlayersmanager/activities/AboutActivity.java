@@ -31,28 +31,56 @@ public class AboutActivity extends AppCompatActivity {
         setContentView(R.layout.activity_about);
 
         DeveloperBean[] developers = {
-                new DeveloperBean("Syko Pompos", getString(R.string.LayersLeadDeveloper), getDrawable(R.drawable.about_syko), getString(R.string.linkSyko)),
-                new DeveloperBean("Reinhard Strauch", getString(R.string.LayersLeadDeveloper), getDrawable(R.drawable.about_reinhard), getString(R.string.linkReinhard)),
-                new DeveloperBean("Brian Gill", getString(R.string.LayersDeveloper), getDrawable(R.drawable.about_brian), getString(R.string.linkBrian)),
-                new DeveloperBean("Aldrin Holmes", getString(R.string.LayersDeveloper), getDrawable(R.drawable.about_aldrin), getString(R.string.linkAldrin)),
-                new DeveloperBean("Branden Manibusan", getString(R.string.LayersDeveloper), getDrawable(R.drawable.about_branden), getString(R.string.linkBranden)),
-                new DeveloperBean("Steve Lovejoy", getString(R.string.AppDeveloper), getDrawable(R.drawable.about_steve), getString(R.string.linkSteve)),
-                new DeveloperBean("Niklas Schnettler", getString(R.string.AppDeveloper), getDrawable(R.drawable.about_niklas), getString(R.string.linkNiklas)),
-                new DeveloperBean("Andrzej Ressel", getString(R.string.AppDeveloper), getDrawable(R.drawable.about_andrzej), getString(R.string.linkAndrzej)),
+                new DeveloperBean("Syko Pompos",
+                        getString(R.string.LayersLeadDeveloper), getDrawable(R.drawable.about_syko),
+                        getString(R.string.linkSyko)),
+                new DeveloperBean("Reinhard Strauch",
+                        getString(R.string.LayersLeadDeveloper), getDrawable(R.drawable.about_reinhard),
+                        getString(R.string.linkReinhard)),
+                new DeveloperBean("Brian Gill",
+                        getString(R.string.LayersDeveloper), getDrawable(R.drawable.about_brian),
+                        getString(R.string.linkBrian)),
+                new DeveloperBean("Aldrin Holmes",
+                        getString(R.string.LayersDeveloper), getDrawable(R.drawable.about_aldrin),
+                        getString(R.string.linkAldrin)),
+                new DeveloperBean("Branden Manibusan",
+                        getString(R.string.LayersDeveloper), getDrawable(R.drawable.about_branden),
+                        getString(R.string.linkBranden)),
+                new DeveloperBean("Steve Lovejoy",
+                        getString(R.string.AppDeveloper), getDrawable(R.drawable.about_steve),
+                        getString(R.string.linkSteve)),
+                new DeveloperBean("Niklas Schnettler",
+                        getString(R.string.AppDeveloper), getDrawable(R.drawable.about_niklas),
+                        getString(R.string.linkNiklas)),
+                new DeveloperBean("Andrzej Ressel",
+                        getString(R.string.AppDeveloper), getDrawable(R.drawable.about_andrzej),
+                        getString(R.string.linkAndrzej)),
                 new DeveloperBean("Denis Suarez", getString(R.string.ShowcaseDeveloper), getDrawable(R.drawable.about_denis), getString(R.string.linkDenis)),
 
         };
 
         DeveloperBean[] usefulLinks = {
-                new DeveloperBean("Layers on Google Plus", getString(R.string.findOutWhatsNew), getDrawable(R.drawable.about_bitsyko), getString(R.string.linkCommunity)),
-                new DeveloperBean("Layers on XDA", getString(R.string.joinTheChat), getDrawable(R.drawable.about_xda), getString(R.string.linkXda))
+                new DeveloperBean("Layers on Google Plus",
+                        getString(R.string.findOutWhatsNew), getDrawable(R.drawable.about_bitsyko),
+                        getString(R.string.linkCommunity)),
+                new DeveloperBean("Layers on XDA",
+                        getString(R.string.joinTheChat), getDrawable(R.drawable.about_xda),
+                        getString(R.string.linkXda))
         };
 
         DeveloperBean[] libraries = {
-                new LicenceBean(getString(R.string.License1), getString(R.string.License1about), getDrawable(R.drawable.ic_opensource), getString(R.string.License1github), generateLicense(getString(R.string.License1about), "Apache", "2012")),
-                new LicenceBean(getString(R.string.License2), getString(R.string.License2about), getDrawable(R.drawable.ic_opensource), getString(R.string.License2github), generateLicense(getString(R.string.License2about), "Apache", "2015")),
-                new LicenceBean(getString(R.string.License3), getString(R.string.License3about), getDrawable(R.drawable.ic_opensource), getString(R.string.License3github), generateLicense(getString(R.string.License3about), "MIT", "2015")),
-                new LicenceBean(getString(R.string.License4), getString(R.string.License4about), getDrawable(R.drawable.ic_opensource), getString(R.string.License4github), generateLicense(getString(R.string.License4about), "Apache", "2014 - 2015"))
+                new LicenceBean(getString(R.string.License2),
+                        getString(R.string.License2about), getDrawable(R.drawable.ic_opensource),
+                        getString(R.string.License2github),
+                        generateLicense(getString(R.string.License2about), "Apache", "2015")),
+                new LicenceBean(getString(R.string.License3),
+                        getString(R.string.License3about), getDrawable(R.drawable.ic_opensource),
+                        getString(R.string.License3github),
+                        generateLicense(getString(R.string.License3about), "MIT", "2015")),
+                new LicenceBean(getString(R.string.License4),
+                        getString(R.string.License4about), getDrawable(R.drawable.ic_opensource),
+                        getString(R.string.License4github),
+                        generateLicense(getString(R.string.License4about), "Apache", "2014 - 2015"))
         };
 
         //set Toolbar
@@ -65,7 +93,8 @@ public class AboutActivity extends AppCompatActivity {
         try {
             String versionName = AboutActivity.this.getPackageManager()
                     .getPackageInfo(AboutActivity.this.getPackageName(), 0).versionName;
-            tv_version.setText(getResources().getString(R.string.version) + " " + versionName);
+            String versionString = getResources().getString(R.string.version) + " " + versionName;
+            tv_version.setText(versionString);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }

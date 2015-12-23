@@ -5,8 +5,6 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,11 +14,8 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -34,17 +29,10 @@ import android.graphics.ColorMatrix;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.RadioButton;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.preference.PreferenceManager;
 
-public class IconPackHelper {
+import com.bitsyko.LayerInfo;
+
+public class IconPack {
 
     static final String ICON_MASK_TAG = "iconmask";
     static final String ICON_BACK_TAG = "iconback";
@@ -236,7 +224,7 @@ public class IconPackHelper {
         return true;
     }
 
-    public IconPackHelper(Context context, String packageName) {
+    public IconPack(Context context, String packageName) {
         mContext = context;
         mIconPackResources = new HashMap<>();
         mFilterBuilder = new ColorFilterUtils.Builder();
@@ -747,7 +735,7 @@ public class IconPackHelper {
         return getResourceIdForDrawable(drawable);
     }
 
-    public static class IconPackInfo implements com.bitsyko.ApplicationInfo {
+    public static class IconPackInfo implements LayerInfo {
         String packageName;
         CharSequence label;
         Drawable icon;

@@ -4,11 +4,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.lovejoy777.rroandlayersmanager.commands.Commands;
+
 public class MainActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        new Commands.CheckAapt(this).execute();
 
         DeviceSingleton.getInstance();
 
