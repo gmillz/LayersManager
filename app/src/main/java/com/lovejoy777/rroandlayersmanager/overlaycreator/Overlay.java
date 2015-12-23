@@ -24,12 +24,15 @@ public class Overlay {
 
     private static final String TARGET_PACKAGE_TEMPLATE = "<<TARGET_PACKAGE>>";
     private static final String PACKAGE_NAME_TEMPLATE = "<<PACKAGE_NAME>>";
+
     public String name;
     public String targetPackage;
     public String packageName;
     public File path;
+
     private HashMap<String, HashMap<String, String>> mResources = new HashMap<>();
     private HashMap<String, ResourceParser.Style> mStyles = new HashMap<>();
+
     private File manifest;
     private File res;
     private File unsignedApp;
@@ -38,8 +41,6 @@ public class Overlay {
 
     private Context context;
     private Creator creator;
-
-    private boolean resourcesLoaded = false;
 
     public Overlay(Context context, String targetPackage) {
         initialize(context, targetPackage,
@@ -72,8 +73,10 @@ public class Overlay {
             }
         }
 
-        if (!res.mkdirs()) {
-            Log.e(TAG, "cannot create " + res.getAbsolutePath());
+        if (!res.exists()) {
+            if (!res.mkdirs()) {
+                Log.e(TAG, "cannot create " + res.getAbsolutePath());
+            }
         }
 
         for (String re : ResourceParser.resourceTypes) {
@@ -84,6 +87,10 @@ public class Overlay {
 
         //loadResources();
         //dereferenceResources();
+    }
+
+    public File getVendorApp() {
+        return vendorApp;
     }
 
     public void loadResources() {
@@ -105,7 +112,6 @@ public class Overlay {
             ResourceParser.parseXML(current, mResources);
         }
         //loadDrawables();
-        resourcesLoaded = true;
     }
 
     public void dereferenceResources() {
@@ -205,11 +211,12 @@ public class Overlay {
                 .replace(PACKAGE_NAME_TEMPLATE, targetPackage + ".overlay");
 
         FileUtils.writeStringToFile(manifest, tempManifest);
+
+        Utils.copyAsset(context.getAssets(), "lint.xml", path.getAbsolutePath() + "/lint.xml");
     }
 
     private void createUnsignedPackage() throws IOException, InterruptedException {
         Log.d("TEST", "createUnsignedPackage");
-        creator.aapt.setExecutable(true, false);
         unsignedApp.getParentFile().mkdirs();
         String command = creator.aapt.getAbsolutePath() + " package -f "
                 + "-M " + manifest.getAbsolutePath()

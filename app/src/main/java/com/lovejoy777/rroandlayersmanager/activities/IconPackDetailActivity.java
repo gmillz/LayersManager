@@ -477,11 +477,11 @@ public class IconPackDetailActivity extends AppCompatActivity implements IconUti
 
                 checkBoxes.add(check);
 
-                if (app.isInPack()) {
-                    linearLayout1.addView(row);
-                } else {
-                    linearLayout2.addView(row);
-                }
+                //if (app.isInPack()) {
+                  //  linearLayout1.addView(row);
+                //} else {
+                  //  linearLayout2.addView(row);
+                //}
 
             }
 

@@ -5,17 +5,23 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.commons.io.IOUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -27,12 +33,26 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
+import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bitsyko.LayerInfo;
+import com.lovejoy777.rroandlayersmanager.R;
 
 public class IconPack {
+
+    private static final String TAG = "IconPack";
+
+    public  static final int REQUEST_PICK_ICON = 13;
 
     static final String ICON_MASK_TAG = "iconmask";
     static final String ICON_BACK_TAG = "iconback";
@@ -101,6 +121,7 @@ public class IconPack {
     private String mName = "";
     private String mDescription = "";
     private String mWhatsNew = "";
+    private List<Drawable> mPreviews = new ArrayList<>();
 
     private static final Random sRandom = new Random();
 
@@ -183,6 +204,9 @@ public class IconPack {
     }
 
     public Drawable getIcon() {
+        if (mIconPackName.equals("default")) {
+            return mContext.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
+        }
         try {
             return mContext.getPackageManager().getApplicationIcon(mIconPackName);
         } catch (NameNotFoundException e) {
@@ -192,7 +216,7 @@ public class IconPack {
     }
 
     public List<Drawable> getPreviewImages() {
-        return null;
+        return mPreviews;
     }
 
     public List<AppIcon> getCompatibleApps() {
@@ -209,10 +233,9 @@ public class IconPack {
             Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(app.packageName);
             if (intent == null) continue;
             ComponentName cmp = intent.getComponent();
-            boolean appInIconPack = getResourceIdForActivityIcon(cmp) != 0;
 
             try {
-                appList.add(new AppIcon(mContext, cmp, this, appInIconPack));
+                appList.add(new AppIcon(mContext, cmp));
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }
@@ -220,23 +243,24 @@ public class IconPack {
         return appList;
     }
 
-    private boolean canOverlayIcons() {
-        return true;
-    }
-
     public IconPack(Context context, String packageName) {
         mContext = context;
-        mIconPackResources = new HashMap<>();
-        mFilterBuilder = new ColorFilterUtils.Builder();
+        mIconPackName = packageName;
+        if (!packageName.equals("default")) {
+            mIconPackResources = new HashMap<>();
+            mFilterBuilder = new ColorFilterUtils.Builder();
 
-        try {
-            mName = String.valueOf(context.getPackageManager().getApplicationLabel(
-                    context.getPackageManager().getApplicationInfo(packageName, 0)));
-        } catch (Exception e) {
-            // ignore
+            try {
+                mName = String.valueOf(context.getPackageManager().getApplicationLabel(
+                        context.getPackageManager().getApplicationInfo(packageName, 0)));
+            } catch (Exception e) {
+                // ignore
+            }
+            loadIconPack(packageName);
+            loadThemeDetails();
+        } else {
+            mName = "Default";
         }
-        loadIconPack(packageName);
-        loadThemeDetails();
     }
 
     private Drawable getDrawableForName(ComponentName name) {
@@ -250,6 +274,16 @@ public class IconPack {
             }
         }
         return null;
+    }
+
+    public static ArrayList<IconPack> getIconPacks(Context context) {
+        ArrayList<IconPack> iconPacks = new ArrayList<>();
+        Map<String, IconPackInfo> map = getSupportedPackages(context);
+        for (String key : map.keySet()) {
+            IconPackInfo info = map.get(key);
+            iconPacks.add(new IconPack(context, info.packageName));
+        }
+        return iconPacks;
     }
 
     public static Map<String, IconPackInfo> getSupportedPackages(Context context) {
@@ -294,12 +328,177 @@ public class IconPack {
         if (parser != null) {
             try {
                 while (parser.next() != XmlPullParser.END_DOCUMENT) {
-                    Log.d("TEST", "name=" + parser.getName());
+                    String name = parser.getName();
+                    Log.d("TEST", "name=" + name);
+                    if (name == null) continue;
+                    if (name.equals("themeName")) {
+                        mDescription = parser.nextText();
+                    } else if (name.equals("themeInfo")) {
+                        Log.d("TEST", "text=" + parser.getText());
+                        mWhatsNew = parser.nextText();
+                    } else if (name.equals("preview")) {
+                        int i = parser.getAttributeCount();
+                        for (int in = 0; in < i; in++) {
+                            String nam = parser.getAttributeName(in);
+                            String val = parser.getAttributeValue(in);
+                            mPreviews.add(
+                                    mIconPackResource.getDrawable(getResourceIdForDrawable(val)));
+                        }
+                    }
                 }
             } catch (Exception e) {
-                // ignore
+                e.printStackTrace();
             }
         }
+    }
+
+    public static void pickIconPack(final Fragment fragment, final boolean pickIcon) {
+        final Context context = fragment.getActivity();
+        final Map<String, IconPackInfo> supportedPackages = getSupportedPackages(context);
+        if (supportedPackages.isEmpty()) {
+            Toast.makeText(context, R.string.no_iconpacks_summary, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final IconAdapter adapter;
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.dialog_pick_iconpack_title);
+            adapter = new IconAdapter(context, supportedPackages, true);
+            builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    String selectedPackage = adapter.getItem(which);
+                    Intent i = new Intent();
+                    i.setClass(context, IconPickerActivity.class);
+                    i.putExtra("package", selectedPackage);
+                    fragment.startActivityForResult(i, REQUEST_PICK_ICON);
+                    dialog.dismiss();
+                }
+            });
+        builder.show();
+    }
+
+    private static class IconAdapter extends BaseAdapter {
+        ArrayList<IconPackInfo> mSupportedPackages;
+        Context mContext;
+        String mCurrentIconPack;
+        int mCurrentIconPackPosition = -1;
+        boolean mPickIcon = false;
+
+        IconAdapter(Context ctx, Map<String, IconPackInfo> supportedPackages) {
+            this(ctx, supportedPackages, false);
+        }
+
+        IconAdapter(Context ctx, Map<String, IconPackInfo> supportedPackages, boolean pickIcon) {
+            mContext = ctx;
+            mSupportedPackages = new ArrayList<>(supportedPackages.values());
+            Collections.sort(mSupportedPackages, new Comparator<IconPackInfo>() {
+                @Override
+                public int compare(IconPackInfo lhs, IconPackInfo rhs) {
+                    return lhs.label.toString().compareToIgnoreCase(rhs.label.toString());
+                }
+            });
+
+            mPickIcon = pickIcon;
+        }
+
+        @Override
+        public int getCount() {
+            return mSupportedPackages.size();
+        }
+
+        @Override
+        public String getItem(int position) {
+            return mSupportedPackages.get(position).packageName;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        public boolean isCurrentIconPack(int position) {
+            return mCurrentIconPackPosition == position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = View.inflate(mContext, R.layout.iconpack_chooser, null);
+            }
+            IconPackInfo info = mSupportedPackages.get(position);
+            TextView txtView = (TextView) convertView.findViewById(R.id.title);
+            txtView.setText(info.label);
+            ImageView imgView = (ImageView) convertView.findViewById(R.id.icon);
+            imgView.setImageDrawable(info.icon);
+            return convertView;
+        }
+    }
+
+    public static ArrayList<IconPickerActivity.Item> getCustomIconPackResources(
+            Context context, String packageName) {
+        Resources res;
+        try {
+            res = context.getPackageManager().getResourcesForApplication(packageName);
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        XmlResourceParser parser = null;
+        ArrayList<IconPickerActivity.Item> iconPackResources = new ArrayList<>();
+
+        try {
+            parser = res.getAssets().openXmlResourceParser("drawable.xml");
+        } catch (IOException e) {
+            int resId = res.getIdentifier("drawable", "xml", packageName);
+            if (resId != 0) {
+                parser = res.getXml(resId);
+            }
+        }
+
+        if (parser != null) {
+            try {
+                loadCustomResourcesFromXmlParser(parser, iconPackResources);
+            } catch (XmlPullParserException | IOException e) {
+                e.printStackTrace();
+            } finally {
+                parser.close();
+            }
+        }
+        return iconPackResources;
+    }
+
+    private static void loadCustomResourcesFromXmlParser(
+            XmlPullParser parser, ArrayList<IconPickerActivity.Item> iconPackResources)
+            throws XmlPullParserException, IOException {
+
+        int eventType = parser.getEventType();
+        do {
+            if (eventType != XmlPullParser.START_TAG) {
+                continue;
+            }
+
+            if (parser.getName().equalsIgnoreCase("item")) {
+                String drawable = parser.getAttributeValue(null, "drawable");
+                if (TextUtils.isEmpty(drawable) || drawable.length() == 0) {
+                    continue;
+                }
+                IconPickerActivity.Item item = new IconPickerActivity.Item();
+                item.isIcon = true;
+                item.title = drawable;
+                iconPackResources.add(item);
+            } else if (parser.getName().equalsIgnoreCase("category")) {
+                String title = parser.getAttributeValue(null, "title");
+                if (TextUtils.isEmpty(title) || title.length() == 0) {
+                    continue;
+                }
+                IconPickerActivity.Item item = new IconPickerActivity.Item();
+                item.isHeader = true;
+                item.title = title;
+                iconPackResources.add(item);
+            }
+        } while ((eventType = parser.next()) != XmlPullParser.END_DOCUMENT);
+
     }
 
     private void loadResourcesFromXmlParser(XmlPullParser parser,
@@ -543,7 +742,6 @@ public class IconPack {
             return false;
         }
         mIconPackResource = res;
-        mIconPackName = packageName;
         mIconMask = getDrawableForName(ICON_MASK_COMPONENT);
         mIconUpon = getDrawableForName(ICON_UPON_COMPONENT);
         String scale = mIconPackResources.get(ICON_SCALE_COMPONENT);
