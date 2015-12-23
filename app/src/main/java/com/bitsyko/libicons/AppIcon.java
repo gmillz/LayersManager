@@ -12,8 +12,8 @@ import android.util.Log;
 
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -24,16 +24,14 @@ import java.util.List;
 
 public class AppIcon {
 
-    private static final String TAG = "AppIcon";
-
     public Overlay overlay;
     private ApplicationInfo applicationInfo;
     private Resources mAppResources;
     private Context context;
-    private IconPackHelper iconPack;
+    private IconPack iconPack;
     private boolean inPack;
 
-    public AppIcon(Context context, ComponentName cmp, IconPackHelper iconPack, boolean inPack)
+    public AppIcon(Context context, ComponentName cmp, IconPack iconPack, boolean inPack)
             throws PackageManager.NameNotFoundException {
         this.context = context;
         this.applicationInfo = context.getPackageManager().getApplicationInfo(
@@ -54,6 +52,7 @@ public class AppIcon {
 
 
     public void install() throws Exception {
+        Log.d("TEST", "AppIcon.install");
 
         List<String> list = getApplicationIcons();
 
@@ -109,22 +108,15 @@ public class AppIcon {
         String apkLocation = applicationInfo.sourceDir;
         File appt = new File(context.getCacheDir() + "/aapt");
 
-        Process nativeApp = Runtime.getRuntime().exec(new String[]{
-                appt.getAbsolutePath(),
-                "dump", "badging",
-                apkLocation});
+        Utils.CommandOutput commandOutput = Utils.runCommand(appt.getAbsolutePath() + " dump badging " +
+                apkLocation, false);
 
-        String data = IOUtils.toString(nativeApp.getInputStream());
-        String error = IOUtils.toString(nativeApp.getErrorStream());
-
-        nativeApp.waitFor();
-
-        if (!StringUtils.isEmpty(error)) {
-            throw new RuntimeException(error);
+        if (commandOutput == null || !StringUtils.isEmpty(commandOutput.error)) {
+            throw new RuntimeException(commandOutput == null ? "error" : commandOutput.error);
         }
 
 
-        String[] lines = data.split(System.getProperty("line.separator"));
+        String[] lines = commandOutput.output.split(System.getProperty("line.separator"));
 
         List<String> list = new ArrayList<>();
 

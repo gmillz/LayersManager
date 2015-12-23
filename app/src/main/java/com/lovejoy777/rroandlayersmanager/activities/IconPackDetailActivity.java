@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -33,21 +32,21 @@ import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.bitsyko.libicons.AppIcon;
-import com.bitsyko.libicons.IconPackHelper;
-import com.lovejoy777.rroandlayersmanager.AsyncResponse;
+import com.bitsyko.libicons.IconPack;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
+import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class IconPackDetailActivity extends AppCompatActivity implements AsyncResponse {
+public class IconPackDetailActivity extends AppCompatActivity implements IconUtils.Callback {
 
     private CheckBox dontShowAgain;
     private ArrayList<CheckBox> checkBoxes = new ArrayList<>();
-    private IconPackHelper iconPack;
+    private IconPack iconPack;
     private Switch installEverything;
     private FloatingActionButton installationFAB;
     private CoordinatorLayout cordLayout;
@@ -163,7 +162,7 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
 
     private void receiveIntent() {
         String layerPackageName = getIntent().getStringExtra("PackageName");
-        iconPack = new IconPackHelper(this, layerPackageName);
+        iconPack = new IconPack(this, layerPackageName);
         Log.d("PackageName: ", layerPackageName);
     }
 
@@ -344,11 +343,11 @@ public class IconPackDetailActivity extends AppCompatActivity implements AsyncRe
             }
         }
 
-        new Commands.InstallIcons(this, iconsToInstall, this).execute();
+        IconUtils.installIcons(this, iconsToInstall, this);
     }
 
     @Override
-    public void processFinish() {
+    public void onInstallFinish() {
         installationFinishedSnackBar();
         uncheckAllCheckBoxes();
         installEverything.setChecked(false);

@@ -39,9 +39,7 @@ public class Utils {
 
     public static boolean createFolder(File folder) {
         if (!isRootAvailable()) return false;
-        remount("rw");
         runCommand("mkdir " + folder.getPath(), true);
-        remount("ro");
         return true;
     }
 
@@ -64,9 +62,7 @@ public class Utils {
     public static boolean moveFile(String old, String newDir) {
         if (!isRootAvailable()) return false;
         try {
-            remount("rw");
             runCommand("mv -f " + old + " " + newDir, true);
-            remount("ro");
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -77,9 +73,7 @@ public class Utils {
     public static boolean copyFile(String old, String newFile) {
         if (!isRootAccessAvailable()) return false;
         try {
-            remount("rw");
             runCommand("cp " + old + " " + newFile, true);
-            remount("ro");
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -146,7 +140,9 @@ public class Utils {
                                           String fromAssetPath, String toPath) {
         try {
             String[] files = assetManager.list(fromAssetPath);
-            new File(toPath).mkdirs();
+            if (!new File(toPath).mkdirs()) {
+                throw new RuntimeException("cannot create directory: " + toPath);
+            }
             boolean res = true;
             for (String file : files) {
                 Log.d("TEST", "file=" + file);

@@ -71,13 +71,15 @@ public class DetailedTutorialActivity extends AppCompatActivity {
                     OPTION_RESULT)) {
 
                 if (option.getPosition() == 5 && option.isActivated()) {
-                    SharedPreferences myprefs = getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("switch1", true).commit();
+                    SharedPreferences myprefs =
+                            getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
+                    myprefs.edit().putBoolean("switch1", true).apply();
                     Commands.killLauncherIcon(this);
                 }
                 if (option.getPosition() == 6 && option.isActivated()) {
-                    SharedPreferences myprefs = getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("disableNotInstalledApps", true).commit();
+                    SharedPreferences myprefs =
+                            getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
+                    myprefs.edit().putBoolean("disableNotInstalledApps", true).apply();
                 }
             }
         }

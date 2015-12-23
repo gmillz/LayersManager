@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 public class MainActivity extends Activity {
@@ -12,6 +13,8 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        new Commands.CheckAapt(this).execute();
 
         if (!Utils.isRootAccessAvailable()) {
             Toast.makeText(MainActivity.this, R.string.noRoot, Toast.LENGTH_LONG).show();

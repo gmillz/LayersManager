@@ -20,20 +20,18 @@ import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -118,50 +116,6 @@ public class Commands {
         }
 
         return files;
-    }
-
-    public static BufferedReader runCommand(String cmd) {
-        BufferedReader reader;
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(
-                    process.getOutputStream());
-            os.writeBytes(cmd + "\n");
-            os.writeBytes("exit\n");
-            reader = new BufferedReader(new InputStreamReader(
-                    process.getInputStream()));
-            String err = (new BufferedReader(new InputStreamReader(
-                    process.getErrorStream()))).readLine();
-            os.flush();
-
-            if (process.waitFor() != 0 || !StringUtils.isEmpty(err)) {
-
-                if (err != null) {
-                    Log.e("Root Error, cmd: " + cmd, err);
-                } else {
-                    Log.e("Root Error, cmd: " + cmd, "");
-                }
-
-                return null;
-            }
-            return reader;
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static boolean remountSystem(String mountType) {
-        String mountPoint = DeviceSingleton.getInstance().getMountFolder();
-        BufferedReader reader = runCommand("mount -o remount,"
-                + mountType + " " + mountPoint + "\n");
-        try {
-            if (reader != null) reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
     }
 
     public static int getSortMode(Activity context) {
@@ -404,6 +358,46 @@ public class Commands {
             }
         }
 
+    }
+
+    public static class CheckAapt extends AsyncTask<Void, Void, Void> {
+
+        Context context;
+
+        public CheckAapt(Context context) {
+            this.context = context;
+        }
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                FileUtils.deleteDirectory(new File(context.getCacheDir() + "/tempFolder/"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            //Downloading aapt
+            File aapt = new File(context.getCacheDir() + "/aapt");
+
+            if (!aapt.exists()) {
+                for (String url : aaptUrls) {
+                    try {
+                        FileUtils.copyURLToFile(new URL(url), aapt);
+
+                        Utils.CommandOutput output =
+                                Utils.runCommand(aapt.getAbsolutePath() + " v", false);
+
+                        if (output != null && StringUtils.isEmpty(output.error)) {
+                            break;
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            Utils.applyPermissions(aapt.getAbsoluteFile(), "700");
+
+            return null;
+        }
     }
 
     public static class InstallIcons extends AsyncTask<Void, String, Void> {
