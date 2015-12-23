@@ -470,7 +470,6 @@ public class Commands {
             for (AppIcon app : list) {
                 Log.d("Installing", app.getPackageName());
                 try {
-                    app.install();
                     app.overlay.install();
                     publishProgress();
                 } catch (Exception e) {

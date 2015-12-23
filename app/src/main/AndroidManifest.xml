@@ -19,6 +19,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="Layers"
         android:theme="@style/Base.Theme.Toolbar"
+        android:largeHeap="true"
         tools:replace="android:label">
 
         <activity
@@ -83,6 +84,13 @@
             android:name=".activities.IconPackDetailActivity"
             android:exported="true"
             android:theme="@style/Base.Theme.Toolbar" />
+
+        <activity android:name="com.bitsyko.libicons.IconPickerActivity"
+            android:theme="@android:style/Theme.Material.Wallpaper"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleTop" />
 
     </application>
 

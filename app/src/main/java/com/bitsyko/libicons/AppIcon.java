@@ -4,42 +4,31 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
-import com.lovejoy777.rroandlayersmanager.utils.Utils;
-
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class AppIcon {
 
     public Overlay overlay;
     private ApplicationInfo applicationInfo;
-    private Resources mAppResources;
     private Context context;
-    private IconPack iconPack;
-    private boolean inPack;
+    private ComponentName cmp;
+    private Resources mAppResources;
+    private boolean useDefault = false;
 
-    public AppIcon(Context context, ComponentName cmp, IconPack iconPack, boolean inPack)
-            throws PackageManager.NameNotFoundException {
+    public AppIcon(Context context, ComponentName cmp) throws PackageManager.NameNotFoundException {
         this.context = context;
         this.applicationInfo = context.getPackageManager().getApplicationInfo(
                 cmp.getPackageName(), PackageManager.GET_ACTIVITIES);
-        mAppResources = context.getPackageManager().getResourcesForApplication(applicationInfo);
-        this.iconPack = iconPack;
-        this.inPack = inPack;
         overlay = new Overlay(context, cmp.getPackageName());
+        this.cmp = cmp;
+        mAppResources = context.getPackageManager().getResourcesForApplication(applicationInfo);
     }
 
     public String getPackageName() {
@@ -50,88 +39,42 @@ public class AppIcon {
         return String.valueOf(applicationInfo.loadLabel(context.getPackageManager()));
     }
 
-
-    public void install() throws Exception {
-        Log.d("TEST", "AppIcon.install");
-
-        List<String> list = getApplicationIcons();
-
-        if (list.isEmpty()) {
-            throw new RuntimeException("No application icon");
-        }
-
-        List<String> iconLocation = new ArrayList<>();
-
-        for (String string : list) {
-            iconLocation.add(new File(string).getParent());
-        }
-
-        PackageInfo packageInfo =
-                context.getPackageManager().getPackageInfo(
-                        applicationInfo.packageName, PackageManager.GET_ACTIVITIES);
-
-        for (ActivityInfo aInfo : packageInfo.activities) {
-            String drawableName = StringUtils.substringAfter(
-                    mAppResources.getResourceName(aInfo.getIconResource()), "/");
-
-            Bitmap icon;
-
-            int iconId = iconPack.getResourceIdForActivityIcon(aInfo);
-            if (iconId == 0) {
-                Log.d("TEST", "ICON NOT IN PACK = " + aInfo.toString());
-                icon = IconUtils.createIconBitmap(
-                        mAppResources.getDrawable(
-                                aInfo.getIconResource(), null), context, iconPack);
-            } else {
-                Log.d("TEST", "ICON IN PACK = " + aInfo.toString());
-                icon = IconUtils.drawableToBitmap(
-                        iconPack.getIconPackResources().getDrawable(iconId, null));
-            }
-
-            for (String location : iconLocation) {
-                File destFile = new File(overlay.path + File.separator
-                        + location + File.separator + drawableName + ".png");
-                if (!destFile.getParentFile().exists() && !destFile.getParentFile().mkdirs()) {
-                    throw new RuntimeException("cannot create directory");
-                }
-
-                FileOutputStream out = new FileOutputStream(destFile);
-                icon.compress(Bitmap.CompressFormat.PNG, 100, out);
-                out.close();
-            }
-        }
-        overlay.create();
+    public ComponentName getComponentName() {
+        return cmp;
     }
 
-    private List<String> getApplicationIcons() throws IOException, InterruptedException {
-
-        String apkLocation = applicationInfo.sourceDir;
-        File appt = new File(context.getCacheDir() + "/aapt");
-
-        Utils.CommandOutput commandOutput = Utils.runCommand(appt.getAbsolutePath() + " dump badging " +
-                apkLocation, false);
-
-        if (commandOutput == null || !StringUtils.isEmpty(commandOutput.error)) {
-            throw new RuntimeException(commandOutput == null ? "error" : commandOutput.error);
-        }
-
-
-        String[] lines = commandOutput.output.split(System.getProperty("line.separator"));
-
-        List<String> list = new ArrayList<>();
-
-        for (String string : lines) {
-            if (string.contains("application-icon-")) {
-                list.add(StringUtils.substringBetween(string, "'"));
-            }
-        }
-
-        return list;
-
+    public boolean hasOverlay() {
+        return overlay.getVendorApp().exists();
     }
 
+    public Drawable getDefaultIcon() {
+        return IconUtils.getIconFromCache(context, getPackageName());
+    }
 
-    public boolean isInPack() {
-        return inPack;
+    public Bitmap getIcon(IconPack iconPack, ActivityInfo aInfo) {
+        Bitmap icon;
+
+        Log.d("TEST", "packageName=" + aInfo.packageName);
+
+        int iconId = iconPack.getResourceIdForActivityIcon(aInfo);
+        if (iconId == 0) {
+            Log.d("TEST", "ICON NOT IN PACK = " + aInfo.toString());
+            icon = IconUtils.createIconBitmap(
+                    mAppResources.getDrawable(
+                            aInfo.getIconResource(), null), context, iconPack);
+        } else {
+            Log.d("TEST", "ICON IN PACK = " + aInfo.toString());
+            icon = IconUtils.drawableToBitmap(
+                    iconPack.getIconPackResources().getDrawable(iconId, null));
+        }
+        return icon;
+    }
+
+    public void setUseDefault(boolean b) {
+        useDefault = b;
+    }
+
+    public boolean getUseDefault() {
+        return useDefault;
     }
 }

@@ -28,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.Closeable;
@@ -190,13 +191,16 @@ public class Layer implements Closeable, LayerInfo {
                         String attrName = parser.getAttributeName(i);
                         String attrValue = parser.getAttributeValue(i);
                         if (attrName.equals("name")) {
-                            if (attrValue.equals(CM_THEME_NAME_TAG) || attrValue.equals(CM_THEME_AUTHOR_TAG)) {
+                            if (attrValue.equals(CM_THEME_NAME_TAG)
+                                    || attrValue.equals(CM_THEME_AUTHOR_TAG)) {
                                 i++;
                                 String v = parser.getAttributeValue(i);
                                 if (attrValue.equals(CM_THEME_NAME_TAG)) {
-                                    packageInfo.name = appContext.getResources().getString(Integer.parseInt(v));
+                                    packageInfo.name = appContext.getResources()
+                                            .getString(Integer.parseInt(v));
                                 } else if (attrValue.equals(CM_THEME_AUTHOR_TAG)) {
-                                    packageInfo.dev = appContext.getResources().getString(Integer.parseInt(v));
+                                    packageInfo.dev = appContext.getResources()
+                                            .getString(Integer.parseInt(v));
                                 }
                                 packageInfo.cmTheme = true;
                             }
@@ -204,8 +208,10 @@ public class Layer implements Closeable, LayerInfo {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (PackageManager.NameNotFoundException | IOException e) {
             e.printStackTrace();
+        } catch (NumberFormatException | XmlPullParserException e) {
+            // ignore - causes spam
         }
         return packageInfo;
     }

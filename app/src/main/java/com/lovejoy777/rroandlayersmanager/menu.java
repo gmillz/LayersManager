@@ -19,6 +19,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -31,6 +32,7 @@ import com.lovejoy777.rroandlayersmanager.activities.OverlayDetailActivity;
 import com.lovejoy777.rroandlayersmanager.activities.SettingsActivity;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.fragments.BackupRestoreFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.IconFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.InstallFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.PluginFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.UninstallFragment;
@@ -127,7 +129,7 @@ public class menu extends AppCompatActivity {
         if (mode == 0) {
 
             PluginFragment overlayFragment = new PluginFragment();
-            PluginFragment iconFragment = new PluginFragment();
+            IconFragment iconFragment = new IconFragment();
 
             Bundle args1 = new Bundle();
             Bundle args2 = new Bundle();
@@ -161,7 +163,7 @@ public class menu extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        Log.d("TEST", "onActivityResult");
         if (requestCode == IntroductionBuilder.INTRODUCTION_REQUEST_CODE &&
                 resultCode == RESULT_OK) {
             for (Option option : data.<Option>getParcelableArrayListExtra(
@@ -180,11 +182,8 @@ public class menu extends AppCompatActivity {
                         .putBoolean("tutorialShown", true).apply();
                 changeFragment(1);
             }
-        } else {
-            if (resultCode == RESULT_CANCELED) {
-                loadTutorial(this);
-            }
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void loadToolbarNavDrawer() {
