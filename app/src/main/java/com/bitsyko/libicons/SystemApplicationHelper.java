@@ -3,8 +3,6 @@ package com.bitsyko.libicons;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
-import android.os.Build;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,12 +10,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class SystemApplicationHelper {
 
+    private static SystemApplicationHelper instance;
     private Context context;
-
     private Map<String, Collection<String>> installedAppsAndActivities;
     private Collection<String> installedActivities;
 
@@ -25,8 +22,6 @@ public class SystemApplicationHelper {
     private SystemApplicationHelper(Context context) {
         this.context = context;
     }
-
-    private static SystemApplicationHelper instance;
 
     public static SystemApplicationHelper getInstance(Context context) {
 

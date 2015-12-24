@@ -14,12 +14,6 @@ import java.io.OutputStream;
 
 public class Utils {
 
-    public static class CommandOutput {
-        public String output;
-        public String error;
-        public int exitCode;
-    }
-
     public static boolean deleteFile(String path) {
         if (!isRootAvailable()) return false;
         try {
@@ -113,7 +107,7 @@ public class Utils {
     public static boolean remount(String mountType) {
         if (!isRootAvailable()) return false;
         String folder = DeviceSingleton.getInstance().getMountFolder();
-        CommandOutput out =runCommand("mount -o remount," + mountType + " " + folder + "\n", true);
+        CommandOutput out = runCommand("mount -o remount," + mountType + " " + folder + "\n", true);
         return true;
     }
 
@@ -181,5 +175,11 @@ public class Utils {
         while ((read = in.read(buffer)) != -1) {
             out.write(buffer, 0, read);
         }
+    }
+
+    public static class CommandOutput {
+        public String output;
+        public String error;
+        public int exitCode;
     }
 }

@@ -6,8 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.Collections;
-
 //To hold layer's colors (to hold .zip name with name to display)
 public class Color implements Comparable<Color> {
 

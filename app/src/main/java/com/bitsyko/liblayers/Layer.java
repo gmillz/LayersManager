@@ -43,19 +43,19 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
     private final String name;
     private final String packageName;
     private final String developer;
-    private List<Drawable> screenShots;
-    private Drawable promo;
     private final ApplicationInfo applicationInfo;
     private final Resources resources;
     private final Context context;
+    private final Drawable icon;
+    private List<Drawable> screenShots;
+    private Drawable promo;
     private List<Color> colors = new ArrayList<>();
     private String generalZip;
     private List<LayerFile> layers;
-
     //Map for unpacked zipfiles from layer
     private Map<String, ZipFile> zipFileMap = new ArrayMap<>();
-
-    private final Drawable icon;
+    private int screenShotId = 1;
+    private int screenShotNumber = -1;
 
     public Layer(String name, String developer, Drawable icon) {
         this(name, developer, icon, null, null, null, null);
@@ -155,10 +155,6 @@ public class Layer implements Closeable, com.bitsyko.ApplicationInfo {
             }
         });
     }
-
-    private int screenShotId = 1;
-
-    private int screenShotNumber = -1;
 
     public int getScreenShotsNumber() {
 

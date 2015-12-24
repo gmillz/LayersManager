@@ -1,26 +1,20 @@
 package com.bitsyko.libicons;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.Pair;
 
-import com.bitsyko.libicons.shader.DataHolder;
-import com.bitsyko.libicons.shader.Exec;
-
+import org.adw.launcher.IconShader;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,36 +26,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import org.adw.launcher.*;
 
 import kellinwood.security.zipsigner.ZipSigner;
 
 public class AppIcon {
 
+    //ClassName:Drawable
+    List<Pair<String, String>> iconList = new ArrayList<>();
     private ApplicationInfo applicationInfo;
     private Resources res;
     private Context context;
     private IconPack iconPack;
     private boolean inPack;
-
-    //ClassName:Drawable
-    List<Pair<String, String>> iconList = new ArrayList<>();
-
-    private boolean activityInList(String activity) {
-
-        for (Pair<String, String> pair : iconList) {
-            if (pair.first.equals(activity)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     public AppIcon(Context context, String packageName, IconPack iconPack, boolean inPack) throws PackageManager.NameNotFoundException {
         this.context = context;
@@ -74,6 +52,17 @@ public class AppIcon {
     public AppIcon(Context context, String packageName, IconPack iconPack, boolean inPack, Collection<Pair<String, String>> iconList) throws PackageManager.NameNotFoundException {
         this(context, packageName, iconPack, inPack);
         this.iconList.addAll(iconList);
+    }
+
+    private boolean activityInList(String activity) {
+
+        for (Pair<String, String> pair : iconList) {
+            if (pair.first.equals(activity)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void addIconPair(Pair<String, String> pair) {

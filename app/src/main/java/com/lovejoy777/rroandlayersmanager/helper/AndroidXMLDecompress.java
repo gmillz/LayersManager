@@ -10,6 +10,7 @@ public class AndroidXMLDecompress {
     public static int endDocTag = 0x00100101;
     public static int startTag = 0x00100102;
     public static int endTag = 0x00100103;
+    public static String spaces = "                                             ";
 
     static void prt(String str) {
         //System.err.print(str);
@@ -176,8 +177,6 @@ public class AndroidXMLDecompress {
         int strOff = stOff + LEW(xml, sitOff + strInd * 4);
         return compXmlStringAt(xml, strOff);
     }
-
-    public static String spaces = "                                             ";
 
     public static void prtIndent(int indent, String str) {
         prt(spaces.substring(0, Math.min(indent * 2, spaces.length())) + str);

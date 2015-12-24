@@ -27,7 +27,6 @@
     </style>
 
 
-
     <!-- About -->
     <style name="Toolbar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowNoTitle">true</item>
@@ -42,7 +41,6 @@
         <item name="android:divider">@null</item>
         <item name="android:listDivider">@null</item>
     </style>
-
 
 
     <style name="Toolbar.Popup.AppCompat" parent="Theme.AppCompat.Light"></style>

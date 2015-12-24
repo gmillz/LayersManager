@@ -12,14 +12,15 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.bitsyko.liblayers.layerfiles.LayerFile;
 import com.bitsyko.libicons.AppIcon;
+import com.bitsyko.liblayers.layerfiles.LayerFile;
 import com.lovejoy777.rroandlayersmanager.AsyncResponse;
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.Utils;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedInputStream;
@@ -29,20 +30,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-
-import org.apache.commons.io.IOUtils;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 
 public class Commands {
+
+    private static final String[] aaptUrls = {
+            "https://www.dropbox.com/s/au7ccu1gtroqvzt/aapt_x86?dl=1",
+            "https://www.dropbox.com/s/5x2fpgw6ojyao2d/aapt_arm?dl=1"};
 
     //No instances
     private Commands() {
@@ -83,7 +84,6 @@ public class Commands {
         return folders;
     }
 
-
     public static void reboot(final Context context) {
         AlertDialog.Builder progressDialogReboot = new AlertDialog.Builder(context);
         progressDialogReboot.setTitle(R.string.Reboot);
@@ -111,7 +111,6 @@ public class Commands {
         progressDialogReboot.show();
     }
 
-
     public static ArrayList<String> fileNamesFromZip(File zip) throws IOException {
 
         ArrayList<String> files = new ArrayList<>();
@@ -127,6 +126,87 @@ public class Commands {
 
     }
 
+    public static BufferedReader runCommand(String cmd) {
+        BufferedReader reader;
+        try {
+            Process process = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(
+                    process.getOutputStream());
+            os.writeBytes(cmd + "\n");
+            os.writeBytes("exit\n");
+            reader = new BufferedReader(new InputStreamReader(
+                    process.getInputStream()));
+            String err = (new BufferedReader(new InputStreamReader(
+                    process.getErrorStream()))).readLine();
+            os.flush();
+
+            if (process.waitFor() != 0 || !StringUtils.isEmpty(err)) {
+
+                if (err != null) {
+                    Log.e("Root Error, cmd: " + cmd, err);
+                } else {
+                    Log.e("Root Error, cmd: " + cmd, "");
+                }
+
+                return null;
+            }
+            return reader;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static boolean remountSystem(String mountType) {
+        String mountPoint = DeviceSingleton.getInstance().getMountFolder();
+        BufferedReader reader = runCommand("mount -o remount,"
+                + mountType + " " + mountPoint + "\n");
+        try {
+            if (reader != null) reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public static int getSortMode(Activity context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getInt("sortMode", 1);
+    }
+
+    public static void setSortMode(Activity context, int mode) {
+        PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("sortMode", mode).commit();
+    }
+
+    public static void killLauncherIcon(Context context) {
+
+        PackageManager p = context.getPackageManager();
+        ComponentName componentName = new ComponentName(context, com.lovejoy777.rroandlayersmanager.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
+        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+        Toast.makeText(context, context.getResources().getString(R.string.launcherIconRemoved), Toast.LENGTH_SHORT).show();
+
+    }
+
+    public static void ReviveLauncherIcon(Context context) {
+
+        PackageManager p = context.getPackageManager();
+        ComponentName componentName = new ComponentName(context, com.lovejoy777.rroandlayersmanager.MainActivity.class);
+        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+        Toast.makeText(context, context.getResources().getString(R.string.launcherIconRevived), Toast.LENGTH_SHORT).show();
+
+    }
+
+    public static boolean appInstalledOrNot(Context context, String uri) {
+        PackageManager pm = context.getPackageManager();
+        boolean app_installed;
+        try {
+            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
+            app_installed = true;
+        } catch (PackageManager.NameNotFoundException e) {
+            app_installed = false;
+        }
+        return app_installed;
+    }
 
     public static class InstallZipBetterWay extends AsyncTask<String, Void, Void> {
 
@@ -220,51 +300,6 @@ public class Commands {
             }
         }
     }
-
-    public static BufferedReader runCommand(String cmd) {
-        BufferedReader reader;
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(
-                    process.getOutputStream());
-            os.writeBytes(cmd + "\n");
-            os.writeBytes("exit\n");
-            reader = new BufferedReader(new InputStreamReader(
-                    process.getInputStream()));
-            String err = (new BufferedReader(new InputStreamReader(
-                    process.getErrorStream()))).readLine();
-            os.flush();
-
-            if (process.waitFor() != 0 || !StringUtils.isEmpty(err)) {
-
-                if (err != null) {
-                    Log.e("Root Error, cmd: " + cmd, err);
-                } else {
-                    Log.e("Root Error, cmd: " + cmd, "");
-                }
-
-                return null;
-            }
-            return reader;
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static boolean remountSystem(String mountType) {
-        String mountPoint = DeviceSingleton.getInstance().getMountFolder();
-        BufferedReader reader = runCommand("mount -o remount,"
-                + mountType + " " + mountPoint + "\n");
-        try {
-            if (reader != null) reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
-
 
     public static class UnInstallOverlays extends AsyncTask<Void, Void, Void> {
         private ProgressDialog progress;
@@ -397,11 +432,6 @@ public class Commands {
 
     }
 
-    private static final String[] aaptUrls = {
-            "https://www.dropbox.com/s/au7ccu1gtroqvzt/aapt_x86?dl=1",
-            "https://www.dropbox.com/s/5x2fpgw6ojyao2d/aapt_arm?dl=1"};
-
-
     public static class InstallIcons extends AsyncTask<Void, String, Void> {
 
         ProgressDialog progress;
@@ -492,7 +522,7 @@ public class Commands {
 
             Log.d("Icon", "Moving");
 
-         //   RootTools.remount(DeviceSingleton.getInstance().getMountFolder(), "RW");
+            //   RootTools.remount(DeviceSingleton.getInstance().getMountFolder(), "RW");
 
             Utils.remount("rw");
             Utils.moveFile(context.getCacheDir() + "/tempFolder/signed*", DeviceSingleton.getInstance().getOverlayFolder());
@@ -508,46 +538,6 @@ public class Commands {
             progress.dismiss();
             asyncResponse.processFinish();
         }
-    }
-
-
-    public static int getSortMode(Activity context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getInt("sortMode", 1);
-    }
-
-    public static void setSortMode(Activity context, int mode) {
-        PreferenceManager.getDefaultSharedPreferences(context).edit().putInt("sortMode", mode).commit();
-    }
-
-
-    public static void killLauncherIcon(Context context) {
-
-        PackageManager p = context.getPackageManager();
-        ComponentName componentName = new ComponentName(context, com.lovejoy777.rroandlayersmanager.MainActivity.class); // activity which is first time open in manifiest file which is declare as <category android:name="android.intent.category.LAUNCHER" />
-        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-        Toast.makeText(context, context.getResources().getString(R.string.launcherIconRemoved), Toast.LENGTH_SHORT).show();
-
-    }
-
-    public static void ReviveLauncherIcon(Context context) {
-
-        PackageManager p = context.getPackageManager();
-        ComponentName componentName = new ComponentName(context, com.lovejoy777.rroandlayersmanager.MainActivity.class);
-        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
-        Toast.makeText(context, context.getResources().getString(R.string.launcherIconRevived), Toast.LENGTH_SHORT).show();
-
-    }
-
-   public static boolean appInstalledOrNot(Context context, String uri) {
-        PackageManager pm = context.getPackageManager();
-        boolean app_installed;
-        try {
-            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
-            app_installed = true;
-        } catch (PackageManager.NameNotFoundException e) {
-            app_installed = false;
-        }
-        return app_installed;
     }
 
 }

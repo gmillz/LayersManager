@@ -8,7 +8,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -20,54 +19,34 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.bitsyko.libicons.IconPack;
-import com.bitsyko.libicons.SystemApplicationHelper;
 import com.bitsyko.liblayers.Layer;
-import com.lovejoy777.rroandlayersmanager.activities.*;
+import com.lovejoy777.rroandlayersmanager.activities.AboutActivity;
+import com.lovejoy777.rroandlayersmanager.activities.DetailedTutorialActivity;
+import com.lovejoy777.rroandlayersmanager.activities.IconPackDetailActivity;
+import com.lovejoy777.rroandlayersmanager.activities.OverlayDetailActivity;
+import com.lovejoy777.rroandlayersmanager.activities.SettingsActivity;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
-import com.lovejoy777.rroandlayersmanager.fragments.*;
+import com.lovejoy777.rroandlayersmanager.fragments.BackupRestoreFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.InstallFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.PluginFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.UninstallFragment;
 import com.rubengees.introduction.IntroductionActivity;
 import com.rubengees.introduction.IntroductionBuilder;
 import com.rubengees.introduction.entity.Option;
 import com.rubengees.introduction.entity.Slide;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 public class menu extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
-
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.fragment_container);
-
-        loadToolbarNavDrawer();
-
-        if (!Utils.isRootAvailable()) {
-            Toast.makeText(this, getString(R.string.noRoot), Toast.LENGTH_LONG).show();
-        } else {
-            createImportantDirectories();
-        }
-
-        Boolean tutorialShown = PreferenceManager.getDefaultSharedPreferences(menu.this).getBoolean("tutorialShown", false);
-        if (!tutorialShown) {
-            loadTutorial(this);
-        }else{
-            changeFragment(1);
-        }
-    }
+    private ViewPagerAdapter adapter;
 
     public static void loadTutorial(final Activity context) {
         new IntroductionBuilder(context).withSlides(generateSlides()).introduceMyself();
@@ -93,7 +72,27 @@ public class menu extends AppCompatActivity {
         return slides;
     }
 
-    private ViewPagerAdapter adapter;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.fragment_container);
+
+        loadToolbarNavDrawer();
+
+        if (!Utils.isRootAvailable()) {
+            Toast.makeText(this, getString(R.string.noRoot), Toast.LENGTH_LONG).show();
+        } else {
+            createImportantDirectories();
+        }
+
+        Boolean tutorialShown = PreferenceManager.getDefaultSharedPreferences(menu.this).getBoolean("tutorialShown", false);
+        if (!tutorialShown) {
+            loadTutorial(this);
+        } else {
+            changeFragment(1);
+        }
+    }
 
     private void setupViewPager(ViewPager viewPager, int mode) {
         viewPager.removeAllViews();
@@ -139,41 +138,6 @@ public class menu extends AppCompatActivity {
         viewPager.setAdapter(adapter);
     }
 
-
-    class ViewPagerAdapter extends FragmentStatePagerAdapter {
-        private final List<android.support.v4.app.Fragment> mFragmentList = new ArrayList<>();
-        private final List<String> mFragmentTitleList = new ArrayList<>();
-
-        public ViewPagerAdapter(android.support.v4.app.FragmentManager manager) {
-            super(manager);
-        }
-
-        @Override
-        public android.support.v4.app.Fragment getItem(int position) {
-            return mFragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return mFragmentList.size();
-        }
-
-        public void addFrag(android.support.v4.app.Fragment fragment, String title) {
-            mFragmentList.add(fragment);
-            mFragmentTitleList.add(title);
-        }
-
-        public void removeAllFrags() {
-            mFragmentList.clear();
-            mFragmentTitleList.clear();
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return mFragmentTitleList.get(position);
-        }
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -183,21 +147,21 @@ public class menu extends AppCompatActivity {
             for (Option option : data.<Option>getParcelableArrayListExtra(IntroductionActivity.
                     OPTION_RESULT)) {
 
-                if (option.getPosition()==5 && option.isActivated()){
+                if (option.getPosition() == 5 && option.isActivated()) {
                     SharedPreferences myprefs = getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("switch1",true).commit();
+                    myprefs.edit().putBoolean("switch1", true).commit();
                     Commands.killLauncherIcon(this);
                 }
-                if (option.getPosition()==6 && option.isActivated()){
+                if (option.getPosition() == 6 && option.isActivated()) {
                     SharedPreferences myprefs = getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-                    myprefs.edit().putBoolean("disableNotInstalledApps",true).commit();
+                    myprefs.edit().putBoolean("disableNotInstalledApps", true).commit();
                 }
                 PreferenceManager.getDefaultSharedPreferences(this).edit().putBoolean("tutorialShown", true).commit();
                 changeFragment(1);
 
             }
-        }else{
-            if (resultCode == RESULT_CANCELED){
+        } else {
+            if (resultCode == RESULT_CANCELED) {
                 loadTutorial(this);
             }
         }
@@ -220,7 +184,6 @@ public class menu extends AppCompatActivity {
         }
     }
 
-
     //navigationDrawerIcon Onclick
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -236,7 +199,6 @@ public class menu extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     //set NavigationDrawerContent
     private void setupDrawerContent(NavigationView navigationView) {
@@ -266,7 +228,7 @@ public class menu extends AppCompatActivity {
                                 break;
                             //Showcase
                             case R.id.nav_showcase:
-                                boolean installed = Commands.appInstalledOrNot(menu.this,"com.lovejoy777.showcase");
+                                boolean installed = Commands.appInstalledOrNot(menu.this, "com.lovejoy777.showcase");
                                 if (installed) {
                                     //This intent will help you to launch if the package is already installed
                                     Intent intent = new Intent();
@@ -278,7 +240,7 @@ public class menu extends AppCompatActivity {
                                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=com.lovejoy777.showcase")), bndlanimation);
                                     break;
                                 }
-                            //PlayStore
+                                //PlayStore
                             case R.id.nav_playStore:
                                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/search?q=Layers+Theme&c=apps&docType=1&sp=CAFiDgoMTGF5ZXJzIFRoZW1legIYAIoBAggB:S:ANO1ljK_ZAY")), bndlanimation);
                                 break;
@@ -371,10 +333,6 @@ public class menu extends AppCompatActivity {
 
     }
 
-
-
-
-
     private void createImportantDirectories() {
 
 
@@ -421,5 +379,39 @@ public class menu extends AppCompatActivity {
 
 
         super.onBackPressed();
+    }
+
+    class ViewPagerAdapter extends FragmentStatePagerAdapter {
+        private final List<android.support.v4.app.Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
+
+        public ViewPagerAdapter(android.support.v4.app.FragmentManager manager) {
+            super(manager);
+        }
+
+        @Override
+        public android.support.v4.app.Fragment getItem(int position) {
+            return mFragmentList.get(position);
+        }
+
+        @Override
+        public int getCount() {
+            return mFragmentList.size();
+        }
+
+        public void addFrag(android.support.v4.app.Fragment fragment, String title) {
+            mFragmentList.add(fragment);
+            mFragmentTitleList.add(title);
+        }
+
+        public void removeAllFrags() {
+            mFragmentList.clear();
+            mFragmentTitleList.clear();
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            return mFragmentTitleList.get(position);
+        }
     }
 }

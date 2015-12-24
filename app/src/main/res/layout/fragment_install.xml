@@ -6,8 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginTop="@dimen/toolbarHeight"
-    android:fitsSystemWindows="true"
-    >
+    android:fitsSystemWindows="true">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -28,7 +27,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:elevation="4dp"
-                android:orientation="horizontal"/>
+                android:orientation="horizontal" />
 
         </HorizontalScrollView>
 
@@ -41,8 +40,8 @@
             android:layout_marginEnd="@dimen/smallMargin"
             android:layout_marginStart="@dimen/smallMargin"
             android:layout_marginTop="@dimen/smallMargin"
-            card_view:cardElevation="@dimen/cardElevation"
-            card_view:cardBackgroundColor="@color/card_background">
+            card_view:cardBackgroundColor="@color/card_background"
+            card_view:cardElevation="@dimen/cardElevation">
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -58,7 +57,7 @@
                     android:gravity="center"
                     android:text="@string/emptydirectory"
                     android:textSize="@dimen/textSizeSubheading"
-                    android:visibility="invisible"/>
+                    android:visibility="invisible" />
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/cardList"
@@ -71,19 +70,18 @@
         </android.support.v7.widget.CardView>
 
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/fab6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentEnd="true"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="@dimen/mediumMargin"
-                android:src="@drawable/ic_drawer_install"
-                android:tint="@color/fab_tint"
-                app:elevation="@dimen/design_fab_elevation"/>
-
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/mediumMargin"
+            android:clickable="true"
+            android:src="@drawable/ic_drawer_install"
+            android:tint="@color/fab_tint"
+            app:elevation="@dimen/design_fab_elevation" />
 
 
     </RelativeLayout>

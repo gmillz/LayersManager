@@ -62,7 +62,6 @@ public class CheckBoxHolder extends FrameLayout {
     }
 
 
-
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         return true;

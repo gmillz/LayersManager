@@ -16,8 +16,8 @@ import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v13.app.FragmentCompat;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -89,7 +89,7 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
 
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             askForPermission(1);
-        } else{
+        } else {
             new LoadAndSet().execute();
         }
 
@@ -135,7 +135,7 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
 
     }
 
-    private void loadFAB(){
+    private void loadFAB() {
         fab2 = (android.support.design.widget.FloatingActionButton) cordLayout.findViewById(R.id.fab6);
         fab2.hide();
         fab2.setOnClickListener(new View.OnClickListener() {
@@ -206,7 +206,46 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
 
     }
 
+    public void askForPermission(int mode) {
+        // Should we show an explanation?
+        if (FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            // Explain to the user why we need to read the contacts
+        }
 
+        FragmentCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
+
+        return;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    new LoadAndSet().execute();
+
+                } else {
+
+                    AlertDialog.Builder noPermissionDialog = new AlertDialog.Builder(getActivity());
+                    noPermissionDialog.setTitle(R.string.noPermission);
+                    noPermissionDialog.setMessage(R.string.noPermissionDescription);
+                    noPermissionDialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            getActivity().onBackPressed();
+                        }
+                    });
+                    noPermissionDialog.show();
+
+                }
+                return;
+            }
+
+            // other 'switch' lines to check for other
+            // permissions this app might request
+        }
+    }
 
     private class LoadAndSet extends AsyncTask<Void, String, Void> {
 
@@ -426,49 +465,6 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
                     check = (CheckBox) itemView.findViewById(R.id.deletecheckbox);
                 }
             }
-        }
-    }
-
-    public void askForPermission(int mode){
-        // Should we show an explanation?
-        if (FragmentCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            // Explain to the user why we need to read the contacts
-        }
-
-        FragmentCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
-
-        return;
-    }
-
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    new LoadAndSet().execute();
-
-                } else {
-
-                    AlertDialog.Builder noPermissionDialog = new AlertDialog.Builder(getActivity());
-                    noPermissionDialog.setTitle(R.string.noPermission);
-                    noPermissionDialog.setMessage(R.string.noPermissionDescription);
-                    noPermissionDialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            getActivity().onBackPressed();
-                        }
-                    });
-                    noPermissionDialog.show();
-
-                }
-                return;
-            }
-
-            // other 'switch' lines to check for other
-            // permissions this app might request
         }
     }
 }

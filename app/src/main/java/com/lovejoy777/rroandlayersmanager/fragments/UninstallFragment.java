@@ -1,7 +1,5 @@
 package com.lovejoy777.rroandlayersmanager.fragments;
 
-import android.app.Fragment;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
@@ -12,7 +10,6 @@ import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -46,12 +43,12 @@ import java.util.List;
 
 public class UninstallFragment extends android.support.v4.app.Fragment implements AsyncResponse {
 
+    android.support.v7.widget.Toolbar toolbar;
+    TextView toolbarTitle;
     private FloatingActionButton fab2;
     private LinearLayout mLinearLayout;
     private CoordinatorLayout cordLayout = null;
     private ArrayList<CheckBox> checkBoxes = new ArrayList<>();
-    android.support.v7.widget.Toolbar toolbar;
-    TextView toolbarTitle;
     private int mode;
     private ActionMode mActionMode;
 
@@ -202,6 +199,31 @@ public class UninstallFragment extends android.support.v4.app.Fragment implement
         }
     }
 
+    private void refreshFab() {
+
+        int checkedItems = 0;
+
+        for (CheckBox checkBox : checkBoxes) {
+            if (checkBox.isChecked()) {
+                checkedItems++;
+            }
+        }
+
+        if (checkedItems > 0) {
+            if (mActionMode == null) {
+                mActionMode = getActivity().startActionMode(new ActionBarCallBack());
+            }
+            fab2.show();
+        } else {
+            if (mActionMode != null) {
+                mActionMode.finish();
+                mActionMode = null;
+            }
+
+            fab2.hide();
+        }
+    }
+
     private class LoadAndSet extends AsyncTask<Void, Void, List<FileBean>> {
 
 
@@ -302,31 +324,6 @@ public class UninstallFragment extends android.support.v4.app.Fragment implement
             }
 
             refreshFab();
-        }
-    }
-
-    private void refreshFab() {
-
-        int checkedItems = 0;
-
-        for (CheckBox checkBox : checkBoxes) {
-            if (checkBox.isChecked()) {
-                checkedItems++;
-            }
-        }
-
-        if (checkedItems > 0) {
-            if (mActionMode == null) {
-                mActionMode = getActivity().startActionMode(new ActionBarCallBack());
-            }
-            fab2.show();
-        } else {
-            if (mActionMode != null) {
-                mActionMode.finish();
-                mActionMode = null;
-            }
-
-            fab2.hide();
         }
     }
 

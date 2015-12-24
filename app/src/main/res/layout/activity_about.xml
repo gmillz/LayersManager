@@ -9,7 +9,7 @@
         android:layout_height="80dp"
         android:background="@color/primary"
         android:elevation="@dimen/toolbarElevation"
-        android:gravity="bottom"/>
+        android:gravity="bottom" />
 
     <TextView
         android:id="@+id/tv_AppName"
@@ -20,7 +20,7 @@
         android:elevation="@dimen/toolbarElevation"
         android:text="@string/layersmanager"
         android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
-        android:textColor="@color/actionbar_text_color"/>
+        android:textColor="@color/actionbar_text_color" />
 
     <TextView
         android:id="@+id/tv_Version"
@@ -31,7 +31,7 @@
         android:elevation="@dimen/toolbarElevation"
         android:text="App Version"
         android:textAppearance="@style/TextAppearance.AppCompat.Caption"
-        android:textColor="@color/actionbar_text_secondary_color"/>
+        android:textColor="@color/actionbar_text_secondary_color" />
 
     <ExpandableListView
         android:id="@+id/developers"
@@ -39,6 +39,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar4"
         android:fillViewport="true"
-        android:scrollbars="none"/>
+        android:scrollbars="none" />
 
 </RelativeLayout>

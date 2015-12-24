@@ -8,7 +8,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bitsyko.ApplicationInfo;
-import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.R;
 
 import java.util.List;

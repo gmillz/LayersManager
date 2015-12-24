@@ -6,12 +6,11 @@ import java.util.List;
 
 public class DataHolder {
 
-    private List<Exec> execList = new ArrayList<>();
-
     public int A;
     public int R;
     public int G;
     public int B;
+    private List<Exec> execList = new ArrayList<>();
 
 
     public DataHolder(int a, int r, int g, int b) {
