@@ -88,6 +88,7 @@ public class Utils {
     public static CommandOutput runCommand(String cmd, boolean useRoot) {
         if (!isRootAvailable()) return null;
         CommandOutput output = new CommandOutput();
+        Log.d("TEST", "command=" + cmd);
         try {
             Process process = Runtime.getRuntime().exec(useRoot ? "su" : "sh");
             DataOutputStream os = new DataOutputStream(
@@ -99,6 +100,7 @@ public class Utils {
             output.exitCode = process.waitFor();
             output.output = IOUtils.toString(process.getInputStream());
             output.error = IOUtils.toString(process.getErrorStream());
+            Log.d("TEST", "error=\n" + output.error + "\nout=\n" + output.output);
             if (output.exitCode != 0 || (!"".equals(output.error) && null != output.error)) {
                 Log.e("Root Error, cmd: " + cmd, output.error);
                 return output;

@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.bitsyko.liblayers.Color;
 import com.bitsyko.liblayers.Layer;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,22 +34,16 @@ public class ColorOverlay extends LayerFile {
         File colorZipFile = new File(cacheDir + selectedColor.getZip());
 
         if (!colorZipFile.exists()) {
-
-            try {
-                InputStream inputStream = parentLayer.getResources().getAssets().open("Files" + File.separator + selectedColor.getZip());
-                FileUtils.copyInputStreamToFile(inputStream, colorZipFile);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            Utils.copyAsset(parentLayer.getAssetManager(), "Files" + File.separator
+                    + selectedColor.getZip(), colorZipFile.getAbsolutePath());
         }
 
         File apkFile = new File(cacheDir + name);
 
-
         try {
             ZipFile generalZipFileAsZip = new ZipFile(colorZipFile);
-            InputStream inputStream = generalZipFileAsZip.getInputStream(generalZipFileAsZip.getEntry(name));
+            InputStream inputStream =
+                    generalZipFileAsZip.getInputStream(generalZipFileAsZip.getEntry(name));
 
             FileUtils.copyInputStreamToFile(inputStream, apkFile);
 
