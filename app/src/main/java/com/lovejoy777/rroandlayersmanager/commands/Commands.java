@@ -17,9 +17,8 @@ import com.bitsyko.libicons.AppIcon;
 import com.lovejoy777.rroandlayersmanager.AsyncResponse;
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.R;
-import com.stericson.RootTools.RootTools;
-import com.stericson.RootTools.exceptions.RootDeniedException;
-import com.stericson.RootTools.execution.CommandCapture;
+import com.lovejoy777.rroandlayersmanager.Utils;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -204,36 +203,11 @@ public class Commands {
 
             }
 
-
-            remountSystem("rw");
-
-            RootCommands.moveRoot(tempDir + "*", DeviceSingleton.getInstance().getOverlayFolder() + "/");
-
-            try {
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER & FILES TO 644 RECURING
-                CommandCapture command9 = new CommandCapture(0, "chmod -R 644 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command9);
-                while (!command9.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 755 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-                remountSystem("ro");
-                // CLOSE ALL SHELLS
-                RootTools.closeAllShells();
-
-            } catch (IOException | RootDeniedException | TimeoutException | InterruptedException e) {
-                e.printStackTrace();
-            }
-
-
+            Utils.remount("rw");
+            Utils.moveFile(tempDir + "*", DeviceSingleton.getInstance().getOverlayFolder() + "/");
+            Utils.applyPermissionsRecursive(DeviceSingleton.getInstance().getOverlayFolder(), "644");
+            Utils.applyPermissions(DeviceSingleton.getInstance().getOverlayFolder(), "755");
+            Utils.remount("ro");
             return null;
         }
 
@@ -317,18 +291,18 @@ public class Commands {
 
         @Override
         protected Void doInBackground(Void... params) {
-            remountSystem("rw");
+            Utils.remount("rw");
             for (String path : paths) {
                 Log.d("Removing: ", path);
                 try {
-                    RootTools.deleteFileOrDirectory(RootCommands.getCommandLineString(path), false);
+                    Utils.deleteFile(path);
                 } catch (Exception e) {
                     Log.w("Cannot remove: ", path);
                     e.printStackTrace();
                 }
                 publishProgress();
             }
-            remountSystem("ro");
+            Utils.remount("ro");
             return null;
         }
 
@@ -375,14 +349,12 @@ public class Commands {
         protected Void doInBackground(Void... params) {
 
             // MOUNT /SYSTEM RW
-            remountSystem("rw");
+            Utils.remount("rw");
 
             for (LayerFile layerFile : layersToInstall) {
                 try {
-
-                    String filelocation = RootCommands.getCommandLineString(layerFile.getFile(context).getAbsolutePath());
-
-                    RootCommands.moveRoot(filelocation, DeviceSingleton.getInstance().getOverlayFolder() + "/");
+                    Utils.moveFile(layerFile.getFile(context).getAbsolutePath(),
+                            DeviceSingleton.getInstance().getOverlayFolder() + "/");
 
                     publishProgress();
                 } catch (Exception e) {
@@ -400,30 +372,9 @@ public class Commands {
                 }
             }
 
-            try {
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER & FILES TO 644 RECURING
-                CommandCapture command9 = new CommandCapture(0, "chmod -R 644 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command9);
-                while (!command9.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 755 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-                remountSystem("ro");
-
-                // CLOSE ALL SHELLS
-                RootTools.closeAllShells();
-
-            } catch (IOException | RootDeniedException | TimeoutException | InterruptedException e) {
-                e.printStackTrace();
-            }
+            Utils.applyPermissionsRecursive(DeviceSingleton.getInstance().getOverlayFolder(), "644");
+            Utils.applyPermissions(DeviceSingleton.getInstance().getOverlayFolder(), "755");
+            Utils.remount("ro");
 
             return null;
         }
@@ -488,11 +439,7 @@ public class Commands {
         @Override
         protected Void doInBackground(Void... params) {
 
-            try {
-                FileUtils.deleteDirectory(new File(context.getCacheDir() + "/tempFolder/"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Utils.deleteFile(context.getCacheDir() + "/tempFolder/");
 
             //Downloading aapt
             File appt = new File(context.getCacheDir() + "/aapt");
@@ -528,16 +475,7 @@ public class Commands {
             }
 
 
-            try {
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 700 " + appt.getAbsolutePath());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            Utils.applyPermissions(appt.getAbsolutePath(), "700");
 
 
             for (AppIcon app : list) {
@@ -556,44 +494,11 @@ public class Commands {
 
          //   RootTools.remount(DeviceSingleton.getInstance().getMountFolder(), "RW");
 
-            remountSystem("rw");
-
-            try {
-
-
-                CommandCapture command3 = new CommandCapture(0, "mv -f " + context.getCacheDir() + "/tempFolder/signed*" + " " + DeviceSingleton.getInstance().getOverlayFolder());
-
-                RootTools.getShell(true).add(command3);
-                while (!command3.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER & FILES TO 644 RECURING
-                CommandCapture command9 = new CommandCapture(0, "chmod -R 644 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command9);
-                while (!command9.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                // CHANGE PERMISSIONS OF FINAL /VENDOR/OVERLAY FOLDER BACK TO 755
-                CommandCapture command10 = new CommandCapture(0, "chmod 755 " + DeviceSingleton.getInstance().getOverlayFolder());
-                RootTools.getShell(true).add(command10);
-                while (!command10.isFinished()) {
-                    Thread.sleep(1);
-                }
-
-
-                RootTools.closeAllShells();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            remountSystem("rw");
-
-
+            Utils.remount("rw");
+            Utils.moveFile(context.getCacheDir() + "/tempFolder/signed*", DeviceSingleton.getInstance().getOverlayFolder());
+            Utils.applyPermissionsRecursive(DeviceSingleton.getInstance().getOverlayFolder(), "644");
+            Utils.applyPermissions(DeviceSingleton.getInstance().getOverlayFolder(), "755");
+            Utils.remount("ro");
             return null;
         }
 
