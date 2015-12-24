@@ -4,13 +4,11 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.Snackbar;
@@ -40,7 +38,6 @@ import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class IconFragment extends Fragment implements
@@ -109,8 +106,10 @@ public class IconFragment extends Fragment implements
                         } else {
                             item.setDefaultDrawable(item.drawable);
                         }
+                        item.icon.setUseDefault(true);
                     } else {
                         item.setCustomBitmap(item.icon.getIcon(pack, item.info.activityInfo));
+                        item.icon.setUseDefault(false);
                     }
                 }
                 mAdapter.notifyDataSetChanged();
@@ -141,7 +140,9 @@ public class IconFragment extends Fragment implements
 
     @Override
     public void onInstallFinish() {
-        Snackbar.make(getView(), "Icons installed!", Snackbar.LENGTH_INDEFINITE)
+        View view = getView();
+        if (view == null) return;
+        Snackbar.make(view, "Icons installed!", Snackbar.LENGTH_INDEFINITE)
                 .setAction("Reboot", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -164,22 +165,6 @@ public class IconFragment extends Fragment implements
         } else {
             return super.onOptionsItemSelected(item);
         }
-    }
-
-    public HashMap<String, AppIcon> getAppIcons() {
-        HashMap<String, AppIcon> map = new HashMap<>();
-        for (Item item : mItems) {
-            ActivityInfo info = item.info.activityInfo;
-            ComponentName cmp = new ComponentName(
-                    info.packageName.toLowerCase(), info.name.toLowerCase());
-            try {
-                AppIcon icon = new AppIcon(getActivity(), cmp);
-                map.put(cmp.getPackageName(), icon);
-            } catch (PackageManager.NameNotFoundException e) {
-                // ignore
-            }
-        }
-        return map;
     }
 
     public static class Item {
@@ -257,7 +242,7 @@ public class IconFragment extends Fragment implements
                 @Override
                 public void onClick(View v) {
                     mPickedItem = mItems.get(position);
-                    IconPack.pickIconPack(IconFragment.this, true);
+                    IconPack.pickIconPack(IconFragment.this);
                     if (!mModified.contains(mPickedItem)) {
                         mModified.add(mPickedItem);
                     }

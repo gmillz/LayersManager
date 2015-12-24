@@ -84,6 +84,7 @@ public class Utils {
     public static CommandOutput runCommand(String cmd, boolean useRoot) {
         if (!isRootAvailable()) return null;
         CommandOutput output = new CommandOutput();
+        Log.d("TEST", "command=" + cmd);
         try {
             Process process = Runtime.getRuntime().exec(useRoot ? "su" : "sh");
             DataOutputStream os = new DataOutputStream(
@@ -95,6 +96,7 @@ public class Utils {
             output.exitCode = process.waitFor();
             output.output = IOUtils.toString(process.getInputStream());
             output.error = IOUtils.toString(process.getErrorStream());
+            Log.d("TEST", "error=\n" + output.error + "\nout=\n" + output.output);
             if (output.exitCode != 0 || (!"".equals(output.error) && null != output.error)) {
                 Log.e("Root Error, cmd: " + cmd, output.error);
                 return output;
@@ -109,7 +111,7 @@ public class Utils {
     public static boolean remount(String mountType) {
         if (!isRootAvailable()) return false;
         String folder = DeviceSingleton.getInstance().getMountFolder();
-        runCommand("mount -o remount," + mountType + " " + folder + "\n", true);
+        CommandOutput out =runCommand("mount -o remount," + mountType + " " + folder + "\n", true);
         return true;
     }
 
@@ -140,7 +142,7 @@ public class Utils {
                                           String fromAssetPath, String toPath) {
         try {
             String[] files = assetManager.list(fromAssetPath);
-            if (!new File(toPath).mkdirs()) {
+            if (!new File(toPath).exists() && !new File(toPath).mkdirs()) {
                 throw new RuntimeException("cannot create directory: " + toPath);
             }
             boolean res = true;
@@ -167,6 +169,12 @@ public class Utils {
                                     String fromAssetPath, String toPath) {
         InputStream in = null;
         OutputStream out = null;
+
+        File parent = new File(toPath).getParentFile();
+        if (!parent.exists() && !parent.mkdirs()) {
+            throw new RuntimeException();
+        }
+
         try {
             in = assetManager.open(fromAssetPath);
             new File(toPath).createNewFile();

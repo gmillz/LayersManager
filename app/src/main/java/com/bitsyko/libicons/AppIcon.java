@@ -18,7 +18,6 @@ public class AppIcon {
     public Overlay overlay;
     private ApplicationInfo applicationInfo;
     private Context context;
-    private ComponentName cmp;
     private Resources mAppResources;
     private boolean useDefault = false;
 
@@ -27,7 +26,6 @@ public class AppIcon {
         this.applicationInfo = context.getPackageManager().getApplicationInfo(
                 cmp.getPackageName(), PackageManager.GET_ACTIVITIES);
         overlay = new Overlay(context, cmp.getPackageName());
-        this.cmp = cmp;
         mAppResources = context.getPackageManager().getResourcesForApplication(applicationInfo);
     }
 
@@ -37,10 +35,6 @@ public class AppIcon {
 
     public String getName() {
         return String.valueOf(applicationInfo.loadLabel(context.getPackageManager()));
-    }
-
-    public ComponentName getComponentName() {
-        return cmp;
     }
 
     public boolean hasOverlay() {

@@ -24,7 +24,6 @@ import com.bitsyko.liblayers.layerfiles.LayerFile;
 import com.lovejoy777.rroandlayersmanager.helper.AndroidXMLDecompress;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
@@ -163,7 +162,7 @@ public class Layer implements Closeable, LayerInfo {
 
         }
 
-        getInstalledCMTEThemes(activity, layerList);
+        //getInstalledCMTEThemes(activity, layerList);
 
         return layerList;
     }
@@ -402,14 +401,6 @@ public class Layer implements Closeable, LayerInfo {
 
             for (String overlayFile : layerZips) {
 
-                InputStream in;
-                try {
-                    in = assetManager.open("Files" + File.separator + overlayFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    continue;
-                }
-
                 boolean generalOverlay = false;
 
                 if (StringUtils.endsWithIgnoreCase(overlayFile, "general.zip")) {
@@ -417,16 +408,15 @@ public class Layer implements Closeable, LayerInfo {
                 }
 
                 //Extracting zip
-                File zipFile = new File(context.getCacheDir() + File.separator + StringUtils.deleteWhitespace(getName()) + File.separator + overlayFile);
+                File zipFile = new File(context.getCacheDir() + File.separator
+                        + StringUtils.deleteWhitespace(getName()) + File.separator + overlayFile);
 
-                try {
-                    FileUtils.copyInputStreamToFile(in, zipFile);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                Log.d("TEST", "overlayFile=" + overlayFile);
+
+                Utils.copyAsset(assetManager,
+                        "Files" + File.separator + overlayFile, zipFile.getAbsolutePath());
 
                 //Checking zip content
-
                 ArrayList<? extends ZipEntry> zipEntries = new ArrayList<>();
 
                 try {

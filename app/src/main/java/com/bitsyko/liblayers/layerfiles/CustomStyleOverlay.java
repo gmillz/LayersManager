@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.bitsyko.liblayers.Color;
 import com.bitsyko.liblayers.Layer;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -37,7 +38,8 @@ public class CustomStyleOverlay extends LayerFile {
     @Override
     public File getFile(Context context) {
 
-        String cacheDir = context.getCacheDir() + File.separator + StringUtils.deleteWhitespace(parentLayer.getName()) + File.separator;
+        String cacheDir = context.getCacheDir() + File.separator
+                + StringUtils.deleteWhitespace(parentLayer.getName()) + File.separator;
 
         if (!new File(cacheDir).exists()) {
             new File(cacheDir).mkdirs();
@@ -46,25 +48,18 @@ public class CustomStyleOverlay extends LayerFile {
         File customStyleZipFile = new File(cacheDir + name);
 
         if (!customStyleZipFile.exists()) {
-
-            try {
-                InputStream inputStream = parentLayer.getResources().getAssets().open("Files" + File.separator + name);
-                FileUtils.copyInputStreamToFile(inputStream, customStyleZipFile);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            Utils.copyAsset(parentLayer.getAssetManager(), "Files" + File.separator
+                    + name, customStyleZipFile.getAbsolutePath());
         }
 
         File apkFile = new File(cacheDir + selectedColor.getZip());
 
-
         try {
             ZipFile generalZipFileAsZip = new ZipFile(customStyleZipFile);
-            InputStream inputStream = generalZipFileAsZip.getInputStream(generalZipFileAsZip.getEntry(selectedColor.getZip()));
+            InputStream inputStream = generalZipFileAsZip.getInputStream(
+                    generalZipFileAsZip.getEntry(selectedColor.getZip()));
 
             FileUtils.copyInputStreamToFile(inputStream, apkFile);
-
         } catch (IOException e) {
             e.printStackTrace();
             return null;

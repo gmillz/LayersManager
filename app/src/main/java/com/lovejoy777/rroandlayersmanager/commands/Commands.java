@@ -12,7 +12,6 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.bitsyko.libicons.AppIcon;
 import com.bitsyko.liblayers.layerfiles.LayerFile;
 import com.lovejoy777.rroandlayersmanager.AsyncResponse;
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
@@ -30,8 +29,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -222,9 +219,13 @@ public class Commands {
                     }
                 }
             }
-            Utils.moveFile(tempDir + "*", DeviceSingleton.getInstance().getOverlayFolder() + "/");
+            Utils.remount("rw");
+            for (File f : new File(tempDir).listFiles()) {
+                Utils.moveFile(f.getAbsolutePath(), DeviceSingleton.getInstance().getOverlayFolder() + "/" + f.getName());
+            }
             Utils.applyPermissions(
                     new File(DeviceSingleton.getInstance().getOverlayFolder()), "644");
+            Utils.remount("ro");
             return null;
         }
 
@@ -319,10 +320,11 @@ public class Commands {
 
         @Override
         protected Void doInBackground(Void... params) {
+            Utils.remount("rw");
             for (LayerFile layerFile : layersToInstall) {
                 try {
                     Utils.moveFile(layerFile.getFile(context).getAbsolutePath(),
-                            DeviceSingleton.getInstance().getOverlayFolder() + "/");
+                            DeviceSingleton.getInstance().getOverlayFolder() + "/" + layerFile.getFile(context).getName());
                     publishProgress();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -339,6 +341,7 @@ public class Commands {
             }
             Utils.applyPermissions(
                     new File(DeviceSingleton.getInstance().getOverlayFolder()), "644");
+            Utils.remount("ro");
             return null;
         }
 
@@ -397,91 +400,6 @@ public class Commands {
             Utils.applyPermissions(aapt.getAbsoluteFile(), "700");
 
             return null;
-        }
-    }
-
-    public static class InstallIcons extends AsyncTask<Void, String, Void> {
-
-        ProgressDialog progress;
-        Context context;
-        List<AppIcon> list;
-        AsyncResponse asyncResponse;
-        int i = 0;
-
-        public InstallIcons(Context context, List<AppIcon> list, AsyncResponse asyncResponse) {
-            this.context = context;
-            this.list = list;
-            this.asyncResponse = asyncResponse;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            progress = new ProgressDialog(context);
-            progress.setTitle(R.string.installingOverlays);
-            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progress.setProgress(0);
-            progress.setCancelable(false);
-            progress.setMax(list.size());
-            progress.show();
-        }
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-            //super.onProgressUpdate(values);
-            progress.setProgress(++i);
-            if (values.length != 0) {
-                Toast.makeText(context, values[0], Toast.LENGTH_LONG).show();
-            }
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                FileUtils.deleteDirectory(new File(context.getCacheDir() + "/tempFolder/"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            //Downloading aapt
-            File appt = new File(context.getCacheDir() + "/aapt");
-
-            if (!appt.exists()) {
-                for (String url : aaptUrls) {
-                    try {
-                        FileUtils.copyURLToFile(new URL(url), appt);
-
-                        Utils.CommandOutput output = Utils.runCommand(appt.getAbsolutePath() + " v", false);
-
-                        if (output != null && StringUtils.isEmpty(output.error)) {
-                            Log.d("AAPT", output.output);
-                            break;
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            Utils.applyPermissions(appt.getAbsoluteFile(), "700");
-
-            for (AppIcon app : list) {
-                Log.d("Installing", app.getPackageName());
-                try {
-                    app.overlay.install();
-                    publishProgress();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    publishProgress(e.getMessage());
-                }
-            }
-            Log.d("Icon", "Moving");
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            progress.dismiss();
-            asyncResponse.processFinish();
         }
     }
 }

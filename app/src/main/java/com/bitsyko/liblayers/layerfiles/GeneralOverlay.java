@@ -3,6 +3,7 @@ package com.bitsyko.liblayers.layerfiles;
 import android.content.Context;
 
 import com.bitsyko.liblayers.Layer;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,18 +33,12 @@ public class GeneralOverlay extends LayerFile {
         File generalZipFile = new File(cacheDir + generalZip);
 
         if (!generalZipFile.exists()) {
-
-            try {
-                InputStream inputStream = parentLayer.getResources().getAssets().open("Files" + File.separator + generalZip);
-                FileUtils.copyInputStreamToFile(inputStream, generalZipFile);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Utils.copyAsset(parentLayer.getAssetManager(), "Files" + File.separator
+                    + generalZip, generalZipFile.getAbsolutePath());
 
         }
 
         File apkFile = new File(cacheDir + name);
-
 
         try {
             ZipFile generalZipFileAsZip = new ZipFile(generalZipFile);

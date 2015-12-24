@@ -23,7 +23,6 @@ import android.widget.TextView;
 
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
-import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -210,7 +209,7 @@ public class IconPickerActivity extends Activity {
             protected Drawable doInBackground(Integer... position) {
                 Item info = mItems.get(position[0]);
                 int itemId = info.resource_id;
-                Drawable d = mResources.getDrawable(itemId);
+                Drawable d = mResources.getDrawable(itemId, null);
                 info.drawable = new WeakReference<>(d);
                 return d;
             }
