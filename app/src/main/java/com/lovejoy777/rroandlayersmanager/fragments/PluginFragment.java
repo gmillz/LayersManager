@@ -184,8 +184,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         if (!noOverlays) {
             if (mode == Mode.Layer) {
                 ((menu) getActivity()).openOverlayDetailActivity((Layer) ca.getLayerFromPosition(position));
-            } else if (mode == Mode.IconPack) {
-                ((menu) getActivity()).openIconPackDetailActivity((IconPack.IconPackInfo) ca.getLayerFromPosition(position));
             }
 
 

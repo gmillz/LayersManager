@@ -11,10 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.adw.launcher.IconShader;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -108,6 +110,9 @@ public class IconPack {
     private float mIconTranslationX;
     private float mIconTranslationY;
     private float mIconRotationVariance;
+    private int mIconSize;
+
+    private IconShader.CompiledIconShader mIconShader;
 
     private String mName = "";
     private String mDescription = "";
@@ -168,8 +173,11 @@ public class IconPack {
     }
 
     public float getIconAngle() {
-        return (mIconRotation + (sRandom.nextFloat() * (mIconRotationVariance * 2))
-                - mIconRotationVariance);
+        if (mIconRotationVariance != 0) {
+            return (mIconRotation + (sRandom.nextFloat() * (mIconRotationVariance * 2))
+                    - mIconRotationVariance);
+        }
+        return mIconRotation;
     }
 
     public float getTranslationX() {
@@ -208,32 +216,25 @@ public class IconPack {
         return mPreviews;
     }
 
-    public List<AppIcon> getCompatibleApps() {
-        List<AppIcon> appList = new ArrayList<>();
+    public IconShader.CompiledIconShader getIconShader() {
+        return mIconShader;
+    }
 
-        List<ApplicationInfo> packages = mContext.getPackageManager()
-                .getInstalledApplications(PackageManager.GET_META_DATA);
-
-        for (ApplicationInfo app : packages) {
-            Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(app.packageName);
-            if (intent == null) continue;
-            ComponentName cmp = intent.getComponent();
-
-            try {
-                appList.add(new AppIcon(mContext, cmp));
-            } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        return appList;
+    public int getIconSize() {
+        return mIconSize;
     }
 
     public IconPack(Context context, String packageName) {
         mContext = context;
         mIconPackName = packageName;
+
         if (!packageName.equals("default")) {
             mIconPackResources = new HashMap<>();
             mFilterBuilder = new ColorFilterUtils.Builder();
+
+            ActivityManager am =
+                    (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+            mIconSize = am.getLauncherLargeIconSize();
 
             try {
                 mName = String.valueOf(context.getPackageManager().getApplicationLabel(
@@ -640,6 +641,19 @@ public class IconPack {
         return true;
     }
 
+    public boolean shouldComposeIcon() {
+        return mIconBacks != null ||
+                mIconUpon != null ||
+                mColorFilter != null ||
+                mIconPaletteBack != null ||
+                mIconRotation != 0 ||
+                mIconRotationVariance != 0 ||
+                mIconTranslationX != 0 ||
+                mIconTranslationY != 0 ||
+                mIconScale != 1f;
+
+    }
+
     private boolean parseTranslationComponent(XmlPullParser parser) {
         if (!parser.getName().equalsIgnoreCase(ICON_TRANSLATE_TAG)) return false;
 
@@ -742,7 +756,16 @@ public class IconPack {
         if (cm != null) {
             mColorFilter = cm.getArray().clone();
         }
+        loadShader();
         return true;
+    }
+
+    public void loadShader() {
+        int resId = mIconPackResource.getIdentifier("shader", "xml", getPackageName());
+        if (resId != 0) {
+            XmlPullParser parser = mIconPackResource.getXml(resId);
+            mIconShader = IconShader.parseXml(parser, mIconSize * mIconSize);
+        }
     }
 
     public Map<ComponentName, String> getIconPackResources(

@@ -1,5 +1,6 @@
 package com.lovejoy777.rroandlayersmanager.utils;
 
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +24,7 @@ import android.graphics.drawable.PaintDrawable;
 import android.os.AsyncTask;
 import android.support.v7.graphics.Palette;
 import android.util.DisplayMetrics;
+import android.util.Log;
 
 import com.bitsyko.libicons.AppIcon;
 import com.bitsyko.libicons.IconPack;
@@ -30,6 +32,7 @@ import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.fragments.IconFragment;
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
 
+import org.adw.launcher.IconShader;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -42,16 +45,23 @@ import java.util.concurrent.Executors;
 
 public class IconUtils {
 
-    private static final Canvas sCanvas = new Canvas();
-    private static final Rect sOldBounds = new Rect();
-
     public interface Callback {
         void onInstallFinish();
     }
 
     private static ProgressDialog mProgressDialog;
-    private static Executor mExecutor = Executors.newFixedThreadPool(8);
+    private static Executor mExecutor = Executors.newFixedThreadPool(4);
     private static Callback sCallback;
+
+    private static boolean sInstalling = false;
+
+    public static boolean isInstalling() {
+        return sInstalling;
+    }
+
+    public static void setInstalling(boolean installing) {
+        sInstalling = installing;
+    }
 
     public static void installIcons(Context context, List<AppIcon> list, Callback callback) {
         if (callback != null) sCallback = callback;
@@ -93,10 +103,12 @@ public class IconUtils {
                 if (appIcon.getUseDefault()) {
                     File apk = appIcon.overlay.getVendorApp();
                     if (apk.exists()) {
-                        apk.delete();
+                        if (!apk.delete()) {
+                            throw new RuntimeException("Cannot delete apk");
+                        }
                     }
-                } else {
-                    //appIcon.install();
+                } else if (appIcon.mCustomBitmap != null) {
+                    appIcon.install();
                     appIcon.overlay.create();
                     appIcon.overlay.install();
                 }
@@ -113,73 +125,58 @@ public class IconUtils {
 
     public static Bitmap createIconBitmap(Drawable icon, Context context,
                                           IconPack iconPack) {
-        synchronized (sCanvas) {
-            final int iconBitmapSize = icon.getMinimumWidth();
+        final Canvas canvas = new Canvas();
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        final int iconBitmapSize = am.getLauncherLargeIconSize();
 
-            Drawable iconMask = null;
-            Drawable iconBack = null;
-            Drawable iconPaletteBack = null;
-            Drawable iconUpon = null;
-            float scale = 1f;
-            float angle = 0;
-            float translationX = 0;
-            float translationY = 0;
-            int defaultSwatchColor = 0;
-            int backTintColor = 0;
-            IconPack.SwatchType swatchType = IconPack.SwatchType.None;
-            float[] colorFilter = null;
+        Drawable iconMask = null;
+        Drawable iconBack = null;
+        Drawable iconPaletteBack = null;
+        Drawable iconUpon = null;
+        float scale = 1f;
+        float angle = 0;
+        float translationX = 0;
+        float translationY = 0;
+        int defaultSwatchColor = 0;
+        int backTintColor = 0;
+        IconPack.SwatchType swatchType = IconPack.SwatchType.None;
+        float[] colorFilter = null;
 
-            if (iconPack != null) {
-                iconMask = iconPack.getIconMask();
-                iconBack = iconPack.getIconBack();
-                iconPaletteBack = iconPack.getIconPaletteBack();
-                iconUpon = iconPack.getIconUpon();
-                scale = iconPack.getIconScale();
-                angle = iconPack.getIconAngle();
-                translationX = iconPack.getTranslationX();
-                translationY = iconPack.getTranslationY();
-                swatchType = iconPack.getSwatchType();
-                colorFilter = iconPack.getColorFilter();
+        if (iconPack != null) {
+            iconMask = iconPack.getIconMask();
+            iconBack = iconPack.getIconBack();
+            iconPaletteBack = iconPack.getIconPaletteBack();
+            iconUpon = iconPack.getIconUpon();
+            scale = iconPack.getIconScale();
+            angle = iconPack.getIconAngle();
+            translationX = iconPack.getTranslationX();
+            translationY = iconPack.getTranslationY();
+            swatchType = iconPack.getSwatchType();
+            colorFilter = iconPack.getColorFilter();
+            defaultSwatchColor = iconPack.getDefaultSwatchColor();
+        }
+
+        Log.d("TEST", "iconUpon is null ? " + String.valueOf(iconUpon == null));
+        Log.d("TEST", "iconMask is null ? " + String.valueOf(iconMask == null));
+        Log.d("TEST", "iconSize == " + iconPack.getIconSize());
+
+        icon = resize(context.getResources(), icon, iconPack.getIconSize());
+        icon = shadeIcon(context.getResources(), icon, iconPack.getIconShader());
+
+        int width = iconBitmapSize;
+        int height = iconBitmapSize;
+
+        if (icon instanceof PaintDrawable) {
+            PaintDrawable painter = (PaintDrawable) icon;
+            painter.setIntrinsicWidth(width);
+            painter.setIntrinsicHeight(height);
+        } else if (icon instanceof BitmapDrawable) {
+            // Ensure the bitmap has a density.
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) icon;
+            Bitmap bitmap = bitmapDrawable.getBitmap();
+            if (bitmap.getDensity() == Bitmap.DENSITY_NONE) {
+                bitmapDrawable.setTargetDensity(context.getResources().getDisplayMetrics());
             }
-
-            int width = icon.getIntrinsicWidth();
-            int height = icon.getIntrinsicHeight();
-
-            if (icon instanceof PaintDrawable) {
-                PaintDrawable painter = (PaintDrawable) icon;
-                painter.setIntrinsicWidth(width);
-                painter.setIntrinsicHeight(height);
-            } else if (icon instanceof BitmapDrawable) {
-                // Ensure the bitmap has a density.
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) icon;
-                Bitmap bitmap = bitmapDrawable.getBitmap();
-                if (bitmap.getDensity() == Bitmap.DENSITY_NONE) {
-                    bitmapDrawable.setTargetDensity(context.getResources().getDisplayMetrics());
-                }
-            }
-            int sourceWidth = icon.getIntrinsicWidth();
-            int sourceHeight = icon.getIntrinsicHeight();
-            if (sourceWidth > 0 && sourceHeight > 0) {
-                // Scale the icon proportionally to the icon dimensions
-                final float ratio = (float) sourceWidth / sourceHeight;
-                if (sourceWidth > sourceHeight) {
-                    height = (int) (width / ratio);
-                } else if (sourceHeight > sourceWidth) {
-                    width = (int) (height * ratio);
-                }
-            }
-
-            // no intrinsic size --> use default size
-            int textureWidth = iconBitmapSize;
-            int textureHeight = iconBitmapSize;
-
-            Bitmap bitmap = Bitmap.createBitmap(textureWidth, textureHeight,
-                    Bitmap.Config.ARGB_8888);
-            final Canvas canvas = sCanvas;
-            canvas.setBitmap(bitmap);
-
-            final int left = (textureWidth - width) / 2;
-            final int top = (textureHeight - height) / 2;
 
             if (swatchType != null && swatchType != IconPack.SwatchType.None) {
                 Palette palette = Palette.from(bitmap).generate();
@@ -204,71 +201,90 @@ public class IconUtils {
                         break;
                 }
             }
-
-            sOldBounds.set(icon.getBounds());
-            icon.setBounds(0, 0, width, height);
-            canvas.save();
-            final float halfWidth = width / 2f;
-            final float halfHeight = height / 2f;
-            canvas.rotate(angle, halfWidth, halfHeight);
-            canvas.scale(scale, scale, halfWidth, halfHeight);
-            canvas.translate(translationX, translationY);
-            if (colorFilter != null) {
-                Paint p = null;
-                if (icon instanceof BitmapDrawable) {
-                    p = ((BitmapDrawable) icon).getPaint();
-                } else if (icon instanceof PaintDrawable) {
-                    p = ((PaintDrawable) icon).getPaint();
-                }
-                if (p != null) {
-                    p.setColorFilter(new ColorMatrixColorFilter(colorFilter));
-                }
-            }
-            icon.draw(canvas);
-            canvas.restore();
-            if (iconMask != null) {
-                iconMask.setBounds(icon.getBounds());
-                ((BitmapDrawable) iconMask).getPaint().setXfermode(
-                        new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
-                iconMask.draw(canvas);
-            }
-            Drawable back = null;
-            if (swatchType != null && swatchType != IconPack.SwatchType.None) {
-                back = iconPaletteBack;
-                defaultSwatchColor = iconPack.getDefaultSwatchColor();
-            } else if (iconBack != null) {
-                back = iconBack;
-            }
-            if (back != null) {
-                canvas.setBitmap(null);
-                Bitmap finalBitmap = Bitmap.createBitmap(textureWidth, textureHeight,
-                        Bitmap.Config.ARGB_8888);
-                canvas.setBitmap(finalBitmap);
-                back.setBounds(icon.getBounds());
-                Paint paint = ((BitmapDrawable) back).getPaint();
-                paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OVER));
-                if (backTintColor != 0) {
-                    paint.setColorFilter(new PorterDuffColorFilter(backTintColor,
-                            PorterDuff.Mode.MULTIPLY));
-                }
-                back.draw(canvas);
-                canvas.drawBitmap(bitmap, null, icon.getBounds(), null);
-                bitmap.recycle();
-                bitmap = finalBitmap.copy(Bitmap.Config.ARGB_8888,true);
-                finalBitmap.recycle();
-            }
-            if (iconUpon != null) {
-                iconUpon.draw(canvas);
-            }
-            icon.setBounds(sOldBounds);
-            canvas.setBitmap(null);
-
-            return bitmap;
         }
+        int sourceWidth = icon.getIntrinsicWidth();
+        int sourceHeight = icon.getIntrinsicHeight();
+        if (sourceWidth > 0 && sourceHeight > 0) {
+            // Scale the icon proportionally to the icon dimensions
+            final float ratio = (float) sourceWidth / sourceHeight;
+            if (sourceWidth > sourceHeight) {
+                height = (int) (width / ratio);
+            } else if (sourceHeight > sourceWidth) {
+                width = (int) (height * ratio);
+            }
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(iconBitmapSize, iconBitmapSize,
+                Bitmap.Config.ARGB_8888);
+
+        canvas.setBitmap(bitmap);
+
+        // Scale the original
+        Rect oldBounds = new Rect();
+        oldBounds.set(icon.getBounds());
+        icon.setBounds(0, 0, width, height);
+        canvas.save();
+        final float halfWidth = width / 2f;
+        final float halfHeight = height / 2f;
+        canvas.scale(scale, scale, halfWidth, halfHeight);
+        canvas.translate(translationX, translationY);
+        canvas.rotate(angle, halfWidth, halfHeight);
+        if (colorFilter != null) {
+            Paint p = null;
+            if (icon instanceof BitmapDrawable) {
+                p = ((BitmapDrawable) icon).getPaint();
+            } else if (icon instanceof PaintDrawable) {
+                p = ((PaintDrawable) icon).getPaint();
+            }
+            if (p != null) {
+                p.setColorFilter(new ColorMatrixColorFilter(colorFilter));
+            }
+        }
+        icon.draw(canvas);
+        canvas.restore();
+        if (iconMask != null) {
+            iconMask.setBounds(icon.getBounds());
+            ((BitmapDrawable) iconMask).getPaint().setXfermode(
+                    new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
+            iconMask.draw(canvas);
+        }
+        Drawable back = null;
+        if (swatchType != null && swatchType != IconPack.SwatchType.None) {
+            back = iconPaletteBack;
+        } else if (iconBack != null) {
+            back = iconBack;
+        }
+        if (back != null) {
+            back.setBounds(icon.getBounds());
+            Paint paint = ((BitmapDrawable) back).getPaint();
+            paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OVER));
+            if (backTintColor != 0) {
+                paint.setColorFilter(new PorterDuffColorFilter(backTintColor,
+                        PorterDuff.Mode.MULTIPLY));
+            }
+            back.draw(canvas);
+        }
+        if (iconUpon != null) {
+            iconUpon.setBounds(icon.getBounds());
+            iconUpon.draw(canvas);
+        }
+        icon.setBounds(oldBounds);
+        bitmap.setDensity(canvas.getDensity());
+
+        return bitmap;
+    }
+
+    public static Drawable shadeIcon(Resources res,
+                                     Drawable drawable, IconShader.CompiledIconShader shader) {
+        if (shader == null) return drawable;
+        Bitmap b = drawableToBitmap(drawable);
+        b = IconShader.processIcon(b, shader);
+        Log.d("TEST", "b == null ? " + String.valueOf(b == null));
+        return new BitmapDrawable(res, b);
     }
 
     public static Bitmap drawableToBitmap (Drawable drawable) {
-        Bitmap bitmap = null;
+        Bitmap bitmap;
 
         if (drawable instanceof BitmapDrawable) {
             BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
@@ -314,6 +330,10 @@ public class IconUtils {
         return new BitmapDrawable(res, bitmapResize);
     }
 
+    public static Bitmap resize(Bitmap b, int size) {
+        return Bitmap.createScaledBitmap(b, size, size, false);
+    }
+
     public static void saveBitmapForActivityInfo(
             Context context, ActivityInfo aInfo, Bitmap bitmap) {
         try {
@@ -336,6 +356,8 @@ public class IconUtils {
             for (String string : list) {
                 iconLocation.add(new File(string).getParent());
             }
+
+            Log.d("TEST", "aInfo=" + aInfo.toString());
 
             for (String location : iconLocation) {
                 File destFile = new File(overlay.path + File.separator

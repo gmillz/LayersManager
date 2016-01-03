@@ -27,7 +27,6 @@ import com.bitsyko.libicons.IconPack;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.activities.AboutActivity;
 import com.lovejoy777.rroandlayersmanager.activities.DetailedTutorialActivity;
-import com.lovejoy777.rroandlayersmanager.activities.IconPackDetailActivity;
 import com.lovejoy777.rroandlayersmanager.activities.OverlayDetailActivity;
 import com.lovejoy777.rroandlayersmanager.activities.SettingsActivity;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
@@ -353,17 +352,6 @@ public class menu extends AppCompatActivity {
 
         intent.putExtra("PackageName", layer.getPackageName());
         intent.putExtra("CMTETheme", layer.isCMTETheme);
-
-        startActivity(intent);
-    }
-
-    public void openIconPackDetailActivity(IconPack.IconPackInfo iconPack) {
-        Bundle args = new Bundle();
-        args.putString("PackageName", iconPack.getPackageName());
-
-        Intent intent = new Intent(this, IconPackDetailActivity.class);
-
-        intent.putExtra("PackageName", iconPack.getPackageName());
 
         startActivity(intent);
     }
