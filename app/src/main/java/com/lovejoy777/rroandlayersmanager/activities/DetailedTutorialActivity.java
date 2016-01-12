@@ -12,6 +12,7 @@ import android.view.View;
 
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
+import com.lovejoy777.rroandlayersmanager.helper.Tutorial;
 import com.lovejoy777.rroandlayersmanager.menu;
 import com.rubengees.introduction.IntroductionActivity;
 import com.rubengees.introduction.IntroductionBuilder;
@@ -38,7 +39,7 @@ public class DetailedTutorialActivity extends AppCompatActivity {
         card1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                menu.loadTutorial(DetailedTutorialActivity.this);
+                Tutorial.loadTutorial(DetailedTutorialActivity.this);
             }
         }); // end card6
 

@@ -141,11 +141,11 @@ public class Layer implements Closeable, LayerInfo {
         return null;
     }
 
-    public static List<Layer> getLayersInSystem(Activity activity) {
+    public static List<Layer> getLayersInSystem(Context context) {
 
         List<Layer> layerList = new ArrayList<>();
 
-        PackageManager packageManager = activity.getPackageManager();
+        PackageManager packageManager = context.getPackageManager();
         Intent baseIntent = new Intent(ACTION_PICK_PLUGIN);
         baseIntent.setFlags(Intent.FLAG_DEBUG_LOG_RESOLUTION);
         ArrayList<ResolveInfo> list = (ArrayList<ResolveInfo>)
@@ -155,7 +155,7 @@ public class Layer implements Closeable, LayerInfo {
             ServiceInfo sinfo = info.serviceInfo;
 
             try {
-                layerList.add(layerFromPackageName(sinfo.packageName, activity));
+                layerList.add(layerFromPackageName(sinfo.packageName, context));
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
             }
@@ -361,7 +361,6 @@ public class Layer implements Closeable, LayerInfo {
                 } catch (PackageManager.NameNotFoundException e) {
                     // ignore
                 }
-                Log.d("TEST", "name=" + name);
             }
         } catch (IOException e) {
             // ignore
@@ -410,8 +409,6 @@ public class Layer implements Closeable, LayerInfo {
                 //Extracting zip
                 File zipFile = new File(context.getCacheDir() + File.separator
                         + StringUtils.deleteWhitespace(getName()) + File.separator + overlayFile);
-
-                Log.d("TEST", "overlayFile=" + overlayFile);
 
                 Utils.copyAsset(assetManager,
                         "Files" + File.separator + overlayFile, zipFile.getAbsolutePath());

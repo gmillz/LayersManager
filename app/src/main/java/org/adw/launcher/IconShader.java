@@ -6,9 +6,6 @@ import java.util.List;
 
 import android.content.res.XmlResourceParser;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.util.DisplayMetrics;
 import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -131,7 +128,7 @@ public class IconShader {
     }
 
     public static CompiledIconShader parseXml(XmlPullParser xpp, int pixels) {
-        List<Shader> shaders = new LinkedList<Shader>();
+        List<Shader> shaders = new LinkedList<>();
         Shader s;
         String a0, a1, a2;
         try {
@@ -147,7 +144,6 @@ public class IconShader {
                     s = createShader(a0, a1, a2);
                     if (s != null)
                         shaders.add(s);
-                    Log.d("TEST", "shaders size = " + shaders.size());
                 }
                 eventType = xpp.next();
             }
@@ -228,7 +224,6 @@ public class IconShader {
                     inputValue = Float.parseFloat(inputStr);
                     isValue = true;
                     inputMode = INPUT.VALUE;
-                    ;
             }
             if (!isValue)
                 switch (inputStr.charAt(1)) {
@@ -254,6 +249,7 @@ public class IconShader {
                         throw (new Exception());
                 }
         } catch (Exception e) {
+            // ignore
         }
 
         return new Shader(mode, target, targetChannel, input, inputMode,
@@ -262,13 +258,6 @@ public class IconShader {
 
     public static Bitmap processIcon(Bitmap icon_d, CompiledIconShader compiledShader) {
         List<Shader> shaders = compiledShader.shaders;
-        // get bitmap
-        //  if (icon_d instanceof BitmapDrawable) {
-        //       BitmapDrawable icon_bd = (BitmapDrawable) icon_d;
-        //        icon_bitmap = icon_bd.getBitmap();
-        //    } else {
-        //        return null;
-        //     }
 
         if (icon_d == null) {
             return null;
@@ -457,7 +446,6 @@ public class IconShader {
             switch (s.target) {
                 case IMAGE.BUFFER:
                     buffer_average_valid = false;
-                    ;
                     buffer_intensity_valid = false;
                     break;
                 case IMAGE.OUTPUT:

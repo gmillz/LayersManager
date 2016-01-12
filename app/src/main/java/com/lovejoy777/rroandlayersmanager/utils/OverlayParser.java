@@ -48,10 +48,8 @@ public class OverlayParser {
                     String[] split = value.split("/");
                     String t = split[0].substring(1).split(":")[1];
                     String n = split[1];
-                    //Log.d("TEST", "type=" + t + " : name=" + n);
                     resources.get(t).put(name, mCommonResources.get(t).get(n));
                 }
-                //Log.d("TEST", name + "=" + value);
             }
         }
         for (String name : styles.keySet()) {
@@ -77,7 +75,6 @@ public class OverlayParser {
             HashMap<String, String> map = mCommonResources.get(key);
             for (String s : map.keySet()) {
                 String si = "@" + key + "/" + s;
-                //Utils.runCommand("find " + path + " -type f -print0 | xargs -0 sed -i 's/" + si + "/" + map.get(s));
             }
         }
     }

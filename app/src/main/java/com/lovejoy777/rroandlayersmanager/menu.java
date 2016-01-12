@@ -1,6 +1,5 @@
 package com.lovejoy777.rroandlayersmanager;
 
-import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -13,17 +12,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.bitsyko.libicons.IconPack;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.activities.AboutActivity;
 import com.lovejoy777.rroandlayersmanager.activities.DetailedTutorialActivity;
@@ -31,21 +25,21 @@ import com.lovejoy777.rroandlayersmanager.activities.OverlayDetailActivity;
 import com.lovejoy777.rroandlayersmanager.activities.SettingsActivity;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.fragments.BackupRestoreFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.BootAnimationFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.IconFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.InstallFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.PluginFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.UninstallFragment;
+import com.lovejoy777.rroandlayersmanager.helper.Tutorial;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 import com.rubengees.introduction.IntroductionActivity;
 import com.rubengees.introduction.IntroductionBuilder;
 import com.rubengees.introduction.entity.Option;
-import com.rubengees.introduction.entity.Slide;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-public class menu extends AppCompatActivity {
+public class menu extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener {
 
     public static final String PLAY_SHOWCASE_URI =
             "http://play.google.com/store/apps/details?id=com.lovejoy777.showcase";
@@ -53,52 +47,6 @@ public class menu extends AppCompatActivity {
             "https://play.google.com/store/search?q=Layers+Theme&c=" +
                     "apps&docType=1&sp=CAFiDgoMTGF5ZXJzIFRoZW1legIYAIoBAggB:S:ANO1ljK_ZAY";
     private DrawerLayout mDrawerLayout;
-    private ViewPagerAdapter adapter;
-
-    public static void loadTutorial(final Activity context) {
-        new IntroductionBuilder(context).withSlides(generateSlides()).introduceMyself();
-    }
-
-    public static List<Slide> generateSlides() {
-        List<Slide> slides = new ArrayList<>();
-
-        slides.add(new Slide()
-                .withTitle(R.string.Slide1_Heading)
-                .withDescription(R.string.Slide1_Text)
-                .withColorResource(R.color.tutorial_background_1)
-                .withImage(R.drawable.layersmanager));
-        slides.add(new Slide()
-                .withTitle(R.string.Slide2_Heading)
-                .withDescription(R.string.Slide2_Text)
-                .withColorResource(R.color.tutorial_background_2)
-                .withImage(R.drawable.intro_2));
-        slides.add(new Slide()
-                .withTitle(R.string.Slide3_Heading)
-                .withDescription(R.string.Slide3_Text)
-                .withColorResource(R.color.tutorial_background_3)
-                .withImage(R.drawable.intro_3));
-        slides.add(new Slide()
-                .withTitle(R.string.Slide4_Heading)
-                .withDescription(R.string.Slide4_Text)
-                .withColorResource(R.color.tutorial_background_4)
-                .withImage(R.drawable.intro_4));
-        slides.add(new Slide()
-                .withTitle(R.string.Slide5_Heading)
-                .withDescription(R.string.Slide5_Text)
-                .withColorResource(R.color.tutorial_background_5)
-                .withImage(R.drawable.intro_5));
-        slides.add(new Slide()
-                .withTitle(R.string.Slide6_Heading)
-                .withOption(new Option(R.string.SettingLauncherIconDetail))
-                .withColorResource(R.color.tutorial_background_6)
-                .withImage(R.drawable.layersmanager_crossed));
-        slides.add(new Slide()
-                .withTitle(R.string.Slide7_Heading)
-                .withOption(new Option(R.string.SettingsHideOverlays))
-                .withColorResource(R.color.tutorial_background_6)
-                .withImage(R.drawable.intro_7));
-        return slides;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,53 +64,14 @@ public class menu extends AppCompatActivity {
 
         Boolean tutorialShown = PreferenceManager.getDefaultSharedPreferences(menu.this).getBoolean("tutorialShown", false);
         if (!tutorialShown) {
-            loadTutorial(this);
+            Tutorial.loadTutorial(this);
         } else {
-            changeFragment(1);
+            changeFragment(R.id.nav_themes);
         }
-    }
-
-    private void setupViewPager(ViewPager viewPager, int mode) {
-        viewPager.removeAllViews();
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        if (mode == 0) {
-
-            PluginFragment overlayFragment = new PluginFragment();
-            IconFragment iconFragment = new IconFragment();
-
-            Bundle args1 = new Bundle();
-            Bundle args2 = new Bundle();
-            args1.putInt("Mode", 0);
-            args2.putInt("Mode", 1);
-
-            overlayFragment.setArguments(args1);
-            iconFragment.setArguments(args2);
-
-            adapter.addFrag(overlayFragment, "Overlays");
-            adapter.addFrag(iconFragment, "Icon Overlays");
-        } else {
-            System.out.println("TEST");
-            adapter.removeAllFrags();
-            adapter.notifyDataSetChanged();
-
-            UninstallFragment uninstallOverlays = new UninstallFragment();
-            UninstallFragment uninstallOverlays2 = new UninstallFragment();
-            Bundle args1 = new Bundle();
-            Bundle args2 = new Bundle();
-            args1.putInt("Mode", 0);
-            uninstallOverlays.setArguments(args1);
-            adapter.addFrag(uninstallOverlays, "Overlays");
-            args2.putInt("Mode", 1);
-            uninstallOverlays2.setArguments(args2);
-            adapter.addFrag(uninstallOverlays2, "Icon Overlays");
-            //adapter.addFrag(new UninstallFragment(), "Icon Overlays");
-        }
-        viewPager.setAdapter(adapter);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d("TEST", "onActivityResult");
         if (requestCode == IntroductionBuilder.INTRODUCTION_REQUEST_CODE &&
                 resultCode == RESULT_OK) {
             for (Option option : data.<Option>getParcelableArrayListExtra(
@@ -220,6 +129,12 @@ public class menu extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public boolean onNavigationItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        changeFragment(id);
+        return true;
+    }
+
     //set NavigationDrawerContent
     private void setupDrawerContent(NavigationView navigationView) {
         navigationView.setNavigationItemSelectedListener(
@@ -233,19 +148,28 @@ public class menu extends AppCompatActivity {
                         int id = menuItem.getItemId();
                         switch (id) {
                             //Home
-                            case R.id.nav_home:
+                            case R.id.nav_themes:
                                 menuItem.setChecked(true);
-                                changeFragment(1);
+                                changeFragment(id);
+                                break;
+                            // Icons
+                            case R.id.nav_icons:
+                                menuItem.setChecked(true);
+                                changeFragment(id);
+                                break;
+                            // Boot Animations
+                            case R.id.nav_bootanimation:
+                                changeFragment(id);
                                 break;
                             //Uninstall
                             case R.id.nav_delete:
                                 menuItem.setChecked(true);
-                                changeFragment(2);
+                                changeFragment(id);
                                 break;
                             //Backup & Restore
                             case R.id.nav_restore:
                                 menuItem.setChecked(true);
-                                changeFragment(3);
+                                changeFragment(id);
                                 break;
                             //Showcase
                             case R.id.nav_showcase:
@@ -295,51 +219,36 @@ public class menu extends AppCompatActivity {
                 });
     }
 
-    public void changeFragment(int position) {
-        android.support.v7.widget.Toolbar toolbar =
-                (android.support.v7.widget.Toolbar) findViewById(R.id.toolbar);
+    public void changeFragment(int id) {
         Fragment fragment = null;
         FragmentManager fragmentManager = getFragmentManager();
-        setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle("");
         }
-        ViewPager viewPager = (ViewPager) findViewById(R.id.tabanim_viewpager);
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
-        switch (position) {
-            case 1:
-                setupViewPager(viewPager, 0);
-                tabLayout.setupWithViewPager(viewPager);
+        switch (id) {
+            case R.id.nav_themes:
+                fragment = new PluginFragment();
                 break;
-            case 2:
-                setupViewPager(viewPager, 1);
-                tabLayout.setupWithViewPager(viewPager);
-                //fragment = new UninstallFragment();
+            case R.id.nav_icons:
+                fragment = new IconFragment();
                 break;
-            case 3:
+            case R.id.nav_bootanimation:
+                fragment = new BootAnimationFragment();
+                break;
+            case R.id.nav_delete:
+                fragment = new UninstallFragment();
+                break;
+            case R.id.nav_restore:
                 fragment = new BackupRestoreFragment();
-                break;
-            case 4:
-                fragment = new InstallFragment();
                 break;
         }
 
-
-        if (position > 2) {
+        if (fragment != null) {
             fragmentManager
                     .beginTransaction()
                     .replace(R.id.fragment_container, fragment, "TAG")
                     .addToBackStack(null)
                     .commit();
-        } else {
-            android.support.v4.app.Fragment test =
-                    getSupportFragmentManager().findFragmentByTag("TAG");
-            if (test != null) {
-                fragmentManager
-                        .beginTransaction()
-                        .remove(getFragmentManager().findFragmentByTag("TAG"))
-                        .commit();
-            }
         }
     }
 
@@ -384,42 +293,8 @@ public class menu extends AppCompatActivity {
         }
 
         if (currentFragment instanceof InstallFragment) {
-            changeFragment(1);
+            changeFragment(R.id.nav_delete);
         }
         super.onBackPressed();
-    }
-
-    class ViewPagerAdapter extends FragmentStatePagerAdapter {
-        private final List<android.support.v4.app.Fragment> mFragmentList = new ArrayList<>();
-        private final List<String> mFragmentTitleList = new ArrayList<>();
-
-        public ViewPagerAdapter(android.support.v4.app.FragmentManager manager) {
-            super(manager);
-        }
-
-        @Override
-        public android.support.v4.app.Fragment getItem(int position) {
-            return mFragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return mFragmentList.size();
-        }
-
-        public void addFrag(android.support.v4.app.Fragment fragment, String title) {
-            mFragmentList.add(fragment);
-            mFragmentTitleList.add(title);
-        }
-
-        public void removeAllFrags() {
-            mFragmentList.clear();
-            mFragmentTitleList.clear();
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            return mFragmentTitleList.get(position);
-        }
     }
 }

@@ -68,7 +68,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
     private ArrayList<CheckBox> checkBoxesGeneral = new ArrayList<>();
     private ArrayList<CheckBox> checkBoxesStyle = new ArrayList<>();
     private String choosedStyle = "";
-    private String NewchoosedStyle;
     private Layer layer;
     private Switch installAllGeneral;
     private Switch installAllStyle;
@@ -77,7 +76,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
     private LoadDrawables imageLoader;
     private List<StoppableAsyncTask<Void, ?, ?>> loadLayerApks = new ArrayList<>();
     private boolean isCMTETheme;
-    private CMTETheme mCMTETheme;
 
     private CheckBoxHolder.CheckBoxHolderCallback checkBoxHolderCallback = new CheckBoxHolder.CheckBoxHolderCallback() {
         @Override
@@ -124,21 +122,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
         Log.d("Colors", String.valueOf(layer.getColors()));
         Log.d("PluginVersion", String.valueOf(layer.getPluginVersion()));
-
-        if (isCMTETheme) {
-            loadCMTETheme();
-        }
-    }
-
-    private void loadCMTETheme() {
-        try {
-            AssetManager am = layer.getAssetManager();
-            for (String name : am.list("overlays")) {
-                Log.d("TEST", "name=" + name);
-            }
-        } catch (IOException e) {
-            // ignore
-        }
     }
 
     private boolean isAnyCheckboxEnabled(int mode) {
@@ -462,7 +445,7 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
         ((LinearLayout) cordLayout.findViewById(R.id.LinearLayoutCategory2)).removeAllViews();
 
         SharedPreferences myprefs = getSharedPreferences("layersData", Context.MODE_PRIVATE);
-        myprefs.edit().remove(layer.getPackageName()).commit();
+        myprefs.edit().remove(layer.getPackageName()).apply();
     }
 
     private void changeCheckBoxCheckedStatus(int mode, boolean checked) {
@@ -543,8 +526,7 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
         //if (showInstallationConfirmDialog()) {
         AlertDialog.Builder installdialog = new AlertDialog.Builder(this);
-        final LayoutInflater inflater = getLayoutInflater();
-        View dontShowAgainLayout = inflater.inflate(R.layout.dialog_donotshowagain, null);
+        View dontShowAgainLayout = View.inflate(this, R.layout.dialog_donotshowagain, null);
         dontShowAgain = (CheckBox) dontShowAgainLayout.findViewById(R.id.skip);
 
         installdialog.setView(dontShowAgainLayout);
@@ -594,7 +576,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
             new AsyncTask<Void, Void, Void>() {
                 public Void doInBackground(Void... v) {
                     for (CMTEOverlay overlay : overlays) {
-                        Log.d("TEST", "name=" + overlay.getName());
                         overlay.unpackOverlay();
                         OverlayParser parser = new OverlayParser(overlay);
                         parser.loadCommonResources();
@@ -745,9 +726,6 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
     }
 
     private class LoadDrawables extends AsyncTask<Void, Void, Void> {
-
-        LinearLayout screenshotLayout;
-
 
         @Override
         protected void onPreExecute() {

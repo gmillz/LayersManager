@@ -13,7 +13,7 @@ public class AndroidXMLDecompress {
     public static String spaces = "                                             ";
 
     static void prt(String str) {
-        //System.err.print(str);
+        System.err.print(str);
     }
 
     public static String decompressXML(byte[] xml) {
@@ -95,11 +95,9 @@ public class AndroidXMLDecompress {
             // int tag1 = LEW(xml, off+1*4);
             int lineNo = LEW(xml, off + 2 * 4);
             // int tag3 = LEW(xml, off+3*4);
-            int nameNsSi = LEW(xml, off + 4 * 4);
             int nameSi = LEW(xml, off + 5 * 4);
 
             if (tag0 == startTag) { // XML START TAG
-                int tag6 = LEW(xml, off + 6 * 4); // Expected to be 14001400
                 int numbAttrs = LEW(xml, off + 7 * 4); // Number of Attributes
                 // to follow
                 // int tag8 = LEW(xml, off+8*4); // Expected to be 00000000
@@ -109,16 +107,14 @@ public class AndroidXMLDecompress {
                 startTagLineNo = lineNo;
 
                 // Look for the Attributes
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 for (int ii = 0; ii < numbAttrs; ii++) {
-                    int attrNameNsSi = LEW(xml, off); // AttrName Namespace Str
                     // Ind, or FFFFFFFF
-                    int attrNameSi = LEW(xml, off + 1 * 4); // AttrName String
+                    int attrNameSi = LEW(xml, off + 4); // AttrName String
                     // Index
                     int attrValueSi = LEW(xml, off + 2 * 4); // AttrValue Str
                     // Ind, or
                     // FFFFFFFF
-                    int attrFlags = LEW(xml, off + 3 * 4);
                     int attrResId = LEW(xml, off + 4 * 4); // AttrValue
                     // ResourceId or dup
                     // AttrValue StrInd
@@ -127,7 +123,7 @@ public class AndroidXMLDecompress {
                     String attrName = compXmlString(xml, sitOff, stOff,
                             attrNameSi);
 
-                    String attrValue = "";
+                    String attrValue;
                     if (attrValueSi != -1) {
                         attrValue = compXmlString(xml, sitOff, stOff, attrValueSi);
                     } else {
@@ -142,10 +138,17 @@ public class AndroidXMLDecompress {
 
                     // attrValue = Integer.valueOf(Integer.toHexString(attrResId), 16).intValue();
 
-                    sb.append(" " + attrName + "=\"" + attrValue + "\"");
+                    sb.append(" ");
+                    sb.append(attrName);
+                    sb.append("=\"");
+                    sb.append(attrValue);
+                    sb.append("\"");
                     // tr.add(attrName, attrValue);
                 }
-                finalXML.append("<" + name + sb + ">");
+                finalXML.append("<");
+                finalXML.append(name);
+                finalXML.append(sb);
+                finalXML.append(">");
                 prtIndent(indent, "<" + name + sb + ">");
                 indent++;
 

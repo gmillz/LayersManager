@@ -1,6 +1,7 @@
 package com.lovejoy777.rroandlayersmanager.adapters;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -79,7 +80,7 @@ public class ScreenshotAdapter extends RecyclerView.Adapter<ScreenshotAdapter.Sc
         if (cancelPotentialWork(position, imageView)) {
             final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
             final AsyncDrawable asyncDrawable =
-                    new AsyncDrawable(null, task);
+                    new AsyncDrawable(context.getResources(), null, task);
             imageView.setImageDrawable(asyncDrawable);
             task.execute(position);
         }
@@ -123,9 +124,9 @@ public class ScreenshotAdapter extends RecyclerView.Adapter<ScreenshotAdapter.Sc
     static class AsyncDrawable extends BitmapDrawable {
         private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
 
-        public AsyncDrawable(Bitmap bitmap,
+        public AsyncDrawable(Resources res, Bitmap bitmap,
                              BitmapWorkerTask bitmapWorkerTask) {
-            super(bitmap);
+            super(res, bitmap);
             bitmapWorkerTaskReference =
                     new WeakReference<>(bitmapWorkerTask);
         }
@@ -158,11 +159,11 @@ public class ScreenshotAdapter extends RecyclerView.Adapter<ScreenshotAdapter.Sc
                 bitmap = null;
             }
 
-            if (imageViewReference != null && bitmap != null) {
+            if (bitmap != null) {
                 final ImageView imageView = imageViewReference.get();
                 final BitmapWorkerTask bitmapWorkerTask =
                         getBitmapWorkerTask(imageView);
-                if (this == bitmapWorkerTask && imageView != null) {
+                if (this == bitmapWorkerTask) {
                     imageView.setImageBitmap(bitmap);
                 }
             }

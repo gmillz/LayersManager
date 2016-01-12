@@ -1,7 +1,6 @@
 package com.lovejoy777.rroandlayersmanager.utils;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -118,7 +117,6 @@ public class ResourceParser {
                     if (eventType == XmlPullParser.TEXT) {
                         if (parser.getText() != null) {
                             map.get(resType).put(attrValue, parser.getText());
-                            Log.d("TEST", "value=" + map.get(resType).get(attrName));
                         }
                     }
 

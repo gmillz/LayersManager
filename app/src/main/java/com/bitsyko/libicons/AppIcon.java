@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
@@ -27,7 +28,7 @@ public class AppIcon {
         this.applicationInfo = context.getPackageManager().getApplicationInfo(
                 info.packageName, PackageManager.GET_ACTIVITIES);
         activityInfo = info;
-        overlay = new Overlay(context, info.packageName);
+        overlay = new Overlay(context, info.packageName, "icon_" + info.packageName + ".overlay");
         mAppResources = context.getPackageManager().getResourcesForApplication(applicationInfo);
     }
 
@@ -48,16 +49,20 @@ public class AppIcon {
     }
 
     public Bitmap getIcon(IconPack iconPack, ActivityInfo aInfo) {
-        Bitmap icon;
+        Bitmap icon = null;
 
         int iconId = iconPack.getResourceIdForActivityIcon(aInfo);
-        if (iconId == 0 && iconPack.shouldComposeIcon()) {
+        if (iconId > 0) {
+            Log.d("TEST", "pName=" + getPackageName() + " : icon in pack");
+            icon = IconUtils.drawableToBitmap(
+                    iconPack.getIconPackResources().getDrawable(iconId, null));
+        } else if (iconPack.shouldComposeIcon()) {
+            Log.d("TEST", "pName=" + getPackageName() + " : icon not in pack, composing");
+            Drawable d = mAppResources.getDrawable(aInfo.getIconResource(), null);
+            Log.d("TEST", "d is null ? " + String.valueOf(d == null));
             icon = IconUtils.createIconBitmap(
                     mAppResources.getDrawable(
                             aInfo.getIconResource(), null), context, iconPack);
-        } else {
-            icon = IconUtils.drawableToBitmap(
-                    iconPack.getIconPackResources().getDrawable(iconId, null));
         }
         return icon;
     }

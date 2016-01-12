@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -52,7 +53,6 @@ import java.util.zip.ZipOutputStream;
 
 public class BackupRestoreFragment extends Fragment {
 
-    private FloatingActionButton fab2;
     private ArrayList<String> files = new ArrayList<>();
     private RecyclerView mRecyclerView;
     private CoordinatorLayout cordLayout = null;
@@ -107,10 +107,6 @@ public class BackupRestoreFragment extends Fragment {
         android.support.v7.widget.Toolbar toolbar = (android.support.v7.widget.Toolbar) getActivity().findViewById(R.id.toolbar);
         toolbar.setNavigationIcon(R.drawable.ic_action_menu);
 
-        // appbar elevation
-        AppBarLayout appbar = (AppBarLayout) getActivity().findViewById(R.id.appBarlayout);
-        appbar.setElevation(0);
-
         //change toolbars height
         int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 156, getResources().getDisplayMetrics());
         AppBarLayout.LayoutParams layoutParams = new AppBarLayout.LayoutParams(
@@ -131,14 +127,6 @@ public class BackupRestoreFragment extends Fragment {
         //set toolbars text
         TextView toolbarTitle = (TextView) getActivity().findViewById(R.id.title2);
         toolbarTitle.setText(getString(R.string.BackupRestore));
-
-        //hide viewpager and tablayout
-        ViewPager viewPager = (ViewPager) getActivity().findViewById(R.id.tabanim_viewpager);
-        TabLayout tabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
-        viewPager.setVisibility(View.GONE);
-        viewPager.removeAllViews();
-        tabLayout.setVisibility(View.GONE);
-
     }
 
     private void loadRecyclerView() {
@@ -151,7 +139,8 @@ public class BackupRestoreFragment extends Fragment {
     }
 
     private void loadFAB() {
-        fab2 = (android.support.design.widget.FloatingActionButton) cordLayout.findViewById(R.id.fab6);
+        FloatingActionButton fab2 = (android.support.design.widget.FloatingActionButton)
+                cordLayout.findViewById(R.id.fab6);
         fab2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -160,7 +149,7 @@ public class BackupRestoreFragment extends Fragment {
                 alert.setTitle(R.string.backupInstalledOverlays);
                 alert.setView(input);
                 input.setHint(R.string.enterBackupName);
-                alert.setInverseBackgroundForced(true);
+                //alert.setInverseBackgroundForced(true);
 
                 alert.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 
@@ -222,19 +211,15 @@ public class BackupRestoreFragment extends Fragment {
     }
 
     public void askForPermission(int mode) {
-        // Should we show an explanation?
-        if (FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            // Explain to the user why we need to read the contacts
-        }
 
-        FragmentCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
-
-        return;
+        FragmentCompat.requestPermissions(this,
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
         switch (requestCode) {
             case 1: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -246,19 +231,15 @@ public class BackupRestoreFragment extends Fragment {
                     AlertDialog.Builder noPermissionDialog = new AlertDialog.Builder(getActivity());
                     noPermissionDialog.setTitle(R.string.noPermission);
                     noPermissionDialog.setMessage(R.string.noPermissionDescription);
-                    noPermissionDialog.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    noPermissionDialog.setPositiveButton(android.R.string.yes,
+                            new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             getActivity().onBackPressed();
                         }
                     });
                     noPermissionDialog.show();
-
                 }
-                return;
             }
-
-            // other 'switch' lines to check for other
-            // permissions this app might request
         }
     }
 

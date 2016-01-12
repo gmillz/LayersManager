@@ -1,6 +1,7 @@
 package com.lovejoy777.rroandlayersmanager.fragments;
 
 import android.app.ActivityOptions;
+import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
@@ -10,9 +11,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,6 +24,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +36,7 @@ import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.adapters.CardViewAdapter;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.helper.RecyclerItemClickListener;
+import com.lovejoy777.rroandlayersmanager.helper.ThemeLoader;
 import com.lovejoy777.rroandlayersmanager.menu;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetChangedListener {
+public class PluginFragment extends Fragment {
 
     public int sortMode;
     RecyclerView recList = null;
@@ -68,7 +68,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
     private Boolean noOverlays = false;
     private CoordinatorLayout cordLayout = null;
     private SwipeRefreshLayout mSwipeRefresh;
-    private Mode mode;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -77,37 +76,19 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         ((DrawerLayout) getActivity().findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
         ((NavigationView) getActivity().findViewById(R.id.nav_view)).getMenu().getItem(0).setChecked(true);
         Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
-        toolbar.setNavigationIcon(R.drawable.ic_action_menu);
-        toolbar.setTitle(getString(R.string.InstallOverlays));
-
-        ViewPager viewPager = (ViewPager) getActivity().findViewById(R.id.tabanim_viewpager);
-        TabLayout tabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
-        viewPager.setVisibility(View.VISIBLE);
-        tabLayout.setVisibility(View.VISIBLE);
-
-
-        switch (getArguments().getInt("Mode")) {
-            case 0:
-                mode = Mode.Layer;
-                break;
-            case 1:
-                mode = Mode.IconPack;
-                break;
-        }
 
         TextView toolbarTitle = (TextView) getActivity().findViewById(R.id.title2);
-        toolbarTitle.setText("");
+        toolbarTitle.setText(getString(R.string.themes_title));
 
         int elevation = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0, getResources().getDisplayMetrics());
         int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
 
-
         AppBarLayout.LayoutParams layoutParams = new AppBarLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, height
-        );
+                ViewGroup.LayoutParams.MATCH_PARENT, height);
 
         toolbar.setElevation(elevation);
         toolbar.setLayoutParams(layoutParams);
+        toolbar.setNavigationIcon(R.drawable.ic_action_menu);
 
         LoadRecyclerViewFabToolbar();
 
@@ -118,15 +99,6 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         setHasOptionsMenu(true);
 
         return cordLayout;
-    }
-
-    @Override
-    public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
-        if (i == 0) {
-            mSwipeRefresh.setEnabled(true);
-        } else {
-            mSwipeRefresh.setEnabled(false);
-        }
     }
 
     private void LoadRecyclerViewFabToolbar() {
@@ -182,11 +154,7 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
     //open Plugin page after clicked on a cardview
     protected void onListItemClick(int position) {
         if (!noOverlays) {
-            if (mode == Mode.Layer) {
-                ((menu) getActivity()).openOverlayDetailActivity((Layer) ca.getLayerFromPosition(position));
-            }
-
-
+            ((menu) getActivity()).openOverlayDetailActivity((Layer) ca.getLayerFromPosition(position));
         } else {
             //PlayStore
             if (position == 2) {
@@ -261,24 +229,7 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
     }
 
     private void refreshList() {
-
-        switch (mode) {
-            case Layer:
-                new FillPluginList().execute();
-                break;
-            case IconPack:
-                new FillIconPackList().execute();
-                break;
-            default:
-                throw new RuntimeException("Mode not selected");
-        }
-
-    }
-
-
-    private enum Mode {
-        Layer,
-        IconPack
+        new FillPluginList().execute();
     }
 
     private abstract class LoadStuff extends AsyncTask<Void, Void, List<? extends LayerInfo>> {
@@ -311,7 +262,7 @@ public class PluginFragment extends Fragment implements AppBarLayout.OnOffsetCha
         @Override
         protected List<? extends LayerInfo> doInBackground(Void... params) {
 
-            List<Layer> layerList = Layer.getLayersInSystem(PluginFragment.this.getActivity());
+            List<Layer> layerList = ThemeLoader.getInstance(null).getLayers();
 
             sortMode = Commands.getSortMode(getActivity());
             if (sortMode == 1) {

@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -25,6 +26,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -47,7 +49,7 @@ import java.util.Collections;
 import java.util.Stack;
 
 
-public class InstallFragment extends Fragment implements AsyncResponse, BackButtonListener {
+public class InstallFragment extends Fragment implements AsyncResponse {
 
     private ArrayList<String> fileDirectories = new ArrayList<>();
     private FloatingActionButton fab2;
@@ -95,6 +97,19 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
 
         setHasOptionsMenu(true);
 
+        cordLayout.setFocusableInTouchMode(true);
+        cordLayout.requestFocus();
+        cordLayout.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View view, int i, KeyEvent keyEvent) {
+                if (i == KeyEvent.KEYCODE_BACK) {
+                    onBackPressed();
+                    return true;
+                }
+                return false;
+            }
+        });
+
         return cordLayout;
     }
 
@@ -109,18 +124,6 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
                 ViewGroup.LayoutParams.MATCH_PARENT, height
         );
         toolbar.setLayoutParams(layoutParams);
-
-        //appbar elevation
-        AppBarLayout appbar = (AppBarLayout) getActivity().findViewById(R.id.appBarlayout);
-        int elevation = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0, getResources().getDisplayMetrics());
-        appbar.setElevation(elevation);
-
-        //hide viewpager and tablayout
-        ViewPager viewPager = (ViewPager) getActivity().findViewById(R.id.tabanim_viewpager);
-        TabLayout tabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
-        viewPager.setVisibility(View.GONE);
-        tabLayout.setVisibility(View.GONE);
-        viewPager.removeAllViews();
 
         //toolbar text
         TextView toolbarTitle = (TextView) getActivity().findViewById(R.id.title2);
@@ -191,8 +194,7 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
         super.onCreateOptionsMenu(menu, menuInflater);
     }
 
-    @Override
-    public boolean onBackButton() {
+    public boolean onBackPressed() {
 
         if (directoriesStack.empty()) {
             return true;
@@ -207,19 +209,14 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
     }
 
     public void askForPermission(int mode) {
-        // Should we show an explanation?
-        if (FragmentCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            // Explain to the user why we need to read the contacts
-        }
-
-        FragmentCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
-
-        return;
+        FragmentCompat.requestPermissions(this,
+                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, mode);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
         switch (requestCode) {
             case 1: {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -239,11 +236,7 @@ public class InstallFragment extends Fragment implements AsyncResponse, BackButt
                     noPermissionDialog.show();
 
                 }
-                return;
             }
-
-            // other 'switch' lines to check for other
-            // permissions this app might request
         }
     }
 

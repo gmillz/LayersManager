@@ -18,6 +18,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.app.ActivityManager;
 import android.app.AlertDialog;
+import android.app.Fragment;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -32,7 +33,6 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.drawable.Drawable;
-import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -100,7 +100,7 @@ public class IconPack {
     private Drawable mIconUpon, mIconMask;
     private Drawable[] mIconBacks;
     private static int mIconBackCount;
-    private float mIconScale;
+    private float mIconScale = 1f;
     private Drawable mIconPaletteBack;
     private SwatchType mSwatchType;
     private int[] mDefaultSwatchColors;
@@ -138,7 +138,7 @@ public class IconPack {
     }
 
     public Drawable getIconBack() {
-        return mIconBacks[sRandom.nextInt(mIconBacks.length)];
+        return mIconBacks == null ? null : mIconBacks[sRandom.nextInt(mIconBacks.length)];
     }
 
     public Drawable getIconPaletteBack() {
@@ -315,7 +315,6 @@ public class IconPack {
             try {
                 while (parser.next() != XmlPullParser.END_DOCUMENT) {
                     String name = parser.getName();
-                    Log.d("TEST", "name=" + name);
                     if (name == null) continue;
                     switch (name) {
                         case "themeName":
@@ -642,6 +641,17 @@ public class IconPack {
     }
 
     public boolean shouldComposeIcon() {
+        Log.d("TEST", "mIconBacks=" + String.valueOf(mIconBacks != null));
+        Log.d("TEST", "mIconUpon=" + String.valueOf(mIconUpon != null));
+        Log.d("TEST", "mColorFilter=" + String.valueOf(mColorFilter != null));
+        Log.d("TEST", "mIconPaletteBack=" + String.valueOf(mIconPaletteBack != null));
+        Log.d("TEST", "mIconRotation=" + String.valueOf(mIconRotation != 0));
+        Log.d("TEST", "mIconRotationVariance=" + String.valueOf(mIconRotationVariance != 0));
+        Log.d("TEST", "mIconTranslationX=" + String.valueOf(mIconTranslationX != 0));
+        Log.d("TEST", "mIconTranslationY=" + String.valueOf(mIconTranslationY != 0));
+        Log.d("TEST", "mIconScale=" + String.valueOf(mIconScale != 1f));
+        Log.d("TEST", "mIconShader=" + String.valueOf(mIconShader != null));
+
         return mIconBacks != null ||
                 mIconUpon != null ||
                 mColorFilter != null ||
@@ -650,7 +660,8 @@ public class IconPack {
                 mIconRotationVariance != 0 ||
                 mIconTranslationX != 0 ||
                 mIconTranslationY != 0 ||
-                mIconScale != 1f;
+                mIconScale != 1f ||
+                mIconShader != null;
 
     }
 

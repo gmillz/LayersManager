@@ -1,8 +1,12 @@
 package com.lovejoy777.rroandlayersmanager.fragments;
 
 import android.app.ActivityManager;
+import android.app.Fragment;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
@@ -10,9 +14,9 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
@@ -35,6 +39,7 @@ import com.bitsyko.libicons.IconPack;
 import com.bitsyko.libicons.IconPickerActivity;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
+import com.lovejoy777.rroandlayersmanager.helper.ThemeLoader;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
 
 import java.util.ArrayList;
@@ -43,13 +48,18 @@ import java.util.List;
 public class IconFragment extends Fragment implements
         AppBarLayout.OnOffsetChangedListener, IconUtils.Callback {
 
+    public static final String ICON_CACHE_WIPE = "com.android.launcher.CLEAR_ICON_CACHE";
+
     private Item mPickedItem;
     private int mIconSize;
+    private String mCurrentIconPack;
 
     private ImageAdapter mAdapter;
     private IconPackAdapter mIconPackAdapter;
+    private SharedPreferences mPreferences;
 
-    private ArrayList<Item> mItems = new ArrayList<>();
+    private List<Item> mItems = new ArrayList<>();
+    private List<IconPack> mIconPacks = new ArrayList<>();
 
     private List<Item> mModified = new ArrayList<>();
 
@@ -58,6 +68,8 @@ public class IconFragment extends Fragment implements
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.icon_fragment, container, false);
+
+        mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         ActivityManager activityManager =
                 (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
@@ -72,7 +84,7 @@ public class IconFragment extends Fragment implements
         recyclerView.setHasFixedSize(true);
         //recyclerView.setBackgroundColor(Color.GRAY);
 
-        mItems = IconUtils.getAllIcons(getActivity());
+        mItems = ThemeLoader.getInstance(null).getIcons();
 
         GridLayoutManager layoutManager = new GridLayoutManager(getActivity(), columns);
         recyclerView.setLayoutManager(layoutManager);
@@ -84,24 +96,53 @@ public class IconFragment extends Fragment implements
 
         setHasOptionsMenu(true);
 
-        ArrayList<IconPack> iconPacks = IconPack.getIconPacks(getActivity());
-        IconPack defaultPack = new IconPack(getActivity(), "default");
-        iconPacks.add(defaultPack);
+        mIconPacks = ThemeLoader.getInstance(null).getIconPacks();
+
+        mCurrentIconPack = mPreferences.getString("icon_pack", "default");
 
         Spinner spinner = (Spinner) view.findViewById(R.id.icon_packs);
-        mIconPackAdapter = new IconPackAdapter(getActivity(), iconPacks);
+        mIconPackAdapter = new IconPackAdapter(getActivity(), mIconPacks);
         spinner.setAdapter(mIconPackAdapter);
-        spinner.setSelection(iconPacks.indexOf(defaultPack));
+        int selection = 0;
+        for (int i = 0; i < mIconPacks.size(); i++) {
+            if (mIconPacks.get(i).getPackageName().equals(mCurrentIconPack)) {
+                selection = i;
+                break;
+            }
+        }
+        spinner.setSelection(selection);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 new UpdateIcons().execute(position);
+                mCurrentIconPack = mIconPacks.get(position).getPackageName();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(ThemeLoader.ICON_PACKS_LOADED)) {
+                    mIconPacks = ThemeLoader.getInstance(null).getIconPacks();
+                    mIconPackAdapter.updateItems(mIconPacks);
+                    mIconPackAdapter.notifyDataSetChanged();
+                } else if (intent.getAction().equals(ThemeLoader.ICONS_LOADED)) {
+                    mItems = ThemeLoader.getInstance(null).getIcons();
+                    mAdapter.notifyDataSetChanged();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter(ThemeLoader.ICON_PACKS_LOADED);
+        filter.addAction(ThemeLoader.ICONS_LOADED);
+        getActivity().registerReceiver(receiver, filter);
+
+        // Set toolbar title
+        TextView toolbarTitle = (TextView) getActivity().findViewById(R.id.title2);
+        toolbarTitle.setText(getString(R.string.icons_title));
 
         return view;
     }
@@ -117,18 +158,17 @@ public class IconFragment extends Fragment implements
             }
         }
         IconUtils.installIcons(getActivity(), icons, this);
-
+        mPreferences.edit().putString("icon_pack", mCurrentIconPack).apply();
     }
 
     @Override
     public void onInstallFinish() {
         IconUtils.setInstalling(false);
         View view = getView();
-        Log.d("TEST", "onInstallFinish");
         if (view == null) {
-            Log.d("TEST", "view is null");
             return;
         }
+        getActivity().sendBroadcast(new Intent(ICON_CACHE_WIPE));
         Snackbar.make(view, "Icons installed!", Snackbar.LENGTH_INDEFINITE)
                 .setAction("Reboot", new View.OnClickListener() {
                     @Override
@@ -186,6 +226,10 @@ public class IconFragment extends Fragment implements
             setCustomBitmap(null);
             drawable = d;
         }
+
+        public String getTitle() {
+            return title;
+        }
     }
 
     class ImageViewHolder extends RecyclerView.ViewHolder {
@@ -240,7 +284,6 @@ public class IconFragment extends Fragment implements
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d("TEST", "fragment onActivityResult");
         if (data != null) {
             data.getExtras().getString(IconPickerActivity.SELECTED_RESOURCE_EXTRA);
             Bitmap bitmap = data.getParcelableExtra(IconPickerActivity.SELECTED_BITMAP_EXTRA);
@@ -303,7 +346,7 @@ public class IconFragment extends Fragment implements
 
     public class IconPackAdapter extends ArrayAdapter<IconPack> {
 
-        public IconPackAdapter(Context context, ArrayList<IconPack> iconPacks) {
+        public IconPackAdapter(Context context, List<IconPack> iconPacks) {
             super(context, R.layout.iconpack_chooser, iconPacks);
         }
 
@@ -327,6 +370,13 @@ public class IconFragment extends Fragment implements
             iView.setImageDrawable(getItem(position).getIcon());
             return convertView;
         }
+
+        public void updateItems(List<IconPack> iconPacks) {
+            for (int i = 0; i < getCount(); i++) {
+                remove(getItem(i));
+            }
+            addAll(iconPacks);
+        }
     }
 
     public class UpdateIcons extends AsyncTask<Integer, Void, Void> {
@@ -339,7 +389,6 @@ public class IconFragment extends Fragment implements
             for (Item item : mItems) {
                 IconUtils.putIconInCache(getActivity(), item.packageName, item.drawable);
                 if (def) {
-                    Log.d("TEST", "pName=" + item.packageName);
                     if (item.icon.hasOverlay()) {
                         item.setDefaultDrawable(item.icon.getDefaultIcon());
                     } else {
@@ -347,8 +396,12 @@ public class IconFragment extends Fragment implements
                     }
                     item.icon.setUseDefault(true);
                 } else {
-                    item.setCustomBitmap(item.icon.getIcon(pack, item.info.activityInfo));
-                    item.icon.setUseDefault(false);
+                    Bitmap bitmap = item.icon.getIcon(pack, item.info.activityInfo);
+                    if (bitmap != null) {
+                        Log.d("TEST", "pName=" + item.packageName + " : bitmap");
+                        item.setCustomBitmap(bitmap);
+                        item.icon.setUseDefault(false);
+                    }
                 }
                 publishProgress();
             }

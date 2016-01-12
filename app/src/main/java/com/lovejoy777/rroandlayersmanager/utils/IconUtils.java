@@ -28,6 +28,7 @@ import android.util.Log;
 
 import com.bitsyko.libicons.AppIcon;
 import com.bitsyko.libicons.IconPack;
+import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.fragments.IconFragment;
 import com.lovejoy777.rroandlayersmanager.overlaycreator.Overlay;
@@ -39,6 +40,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -76,7 +79,6 @@ public class IconUtils {
         for (AppIcon app : list) {
             new InstallAppIcon(app).executeOnExecutor(mExecutor);
         }
-        Utils.remount("ro");
     }
 
     private static void progressUpdate() {
@@ -84,6 +86,7 @@ public class IconUtils {
             int progress = mProgressDialog.getProgress() + 1;
             mProgressDialog.setProgress(progress);
             if (mProgressDialog.getMax() == mProgressDialog.getProgress()) {
+                Utils.remount("ro");
                 mProgressDialog.dismiss();
                 if (sCallback != null) sCallback.onInstallFinish();
             }
@@ -109,8 +112,7 @@ public class IconUtils {
                     }
                 } else if (appIcon.mCustomBitmap != null) {
                     appIcon.install();
-                    appIcon.overlay.create();
-                    appIcon.overlay.install();
+                    appIcon.overlay.createAndInstall();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -315,7 +317,6 @@ public class IconUtils {
         for (ResolveInfo info : apps) {
             items.add(new IconFragment.Item(context, info));
         }
-
         return items;
     }
 
@@ -337,31 +338,20 @@ public class IconUtils {
     public static void saveBitmapForActivityInfo(
             Context context, ActivityInfo aInfo, Bitmap bitmap) {
         try {
-            List<String> list = getApplicationIcons(context, aInfo.applicationInfo);
-
             Resources appResources =
                     context.getPackageManager().getResourcesForApplication(aInfo.applicationInfo);
 
             Overlay overlay = new Overlay(context, aInfo.packageName);
 
-            String drawableName = StringUtils.substringAfter(
-                    appResources.getResourceName(aInfo.getIconResource()), "/");
+            String name = appResources.getResourceName(aInfo.getIconResource());
+            String f = StringUtils.substringAfter(StringUtils.substringBefore(name, "/"), ":");
+            String n = StringUtils.substringAfter(name, "/");
 
-            if (list.isEmpty()) {
-                throw new RuntimeException("No application icon");
-            }
+            for (String den : Utils.getDensityBuckets()) {
+                String location = f + "-" + den + "/" + n;
 
-            List<String> iconLocation = new ArrayList<>();
-
-            for (String string : list) {
-                iconLocation.add(new File(string).getParent());
-            }
-
-            Log.d("TEST", "aInfo=" + aInfo.toString());
-
-            for (String location : iconLocation) {
-                File destFile = new File(overlay.path + File.separator
-                        + location + File.separator + drawableName + ".png");
+                File destFile = new File(overlay.getResDir() + File.separator
+                        + location + ".png");
                 if (!destFile.getParentFile().exists() && !destFile.getParentFile().mkdirs()) {
                     throw new RuntimeException("cannot create directory");
                 }
@@ -373,33 +363,6 @@ public class IconUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private static List<String> getApplicationIcons(Context context, ApplicationInfo applicationInfo)
-            throws IOException, InterruptedException {
-
-        String apkLocation = applicationInfo.sourceDir;
-        File appt = new File(context.getCacheDir() + "/aapt");
-
-        Utils.CommandOutput commandOutput = Utils.runCommand(appt.getAbsolutePath() + " dump badging " +
-                apkLocation, false);
-
-        if (commandOutput == null || !StringUtils.isEmpty(commandOutput.error)) {
-            throw new RuntimeException(commandOutput == null ? "error" : commandOutput.error);
-        }
-
-
-        String[] lines = commandOutput.output.split(System.getProperty("line.separator"));
-
-        List<String> list = new ArrayList<>();
-
-        for (String string : lines) {
-            if (string.contains("application-icon-")) {
-                list.add(StringUtils.substringBetween(string, "'"));
-            }
-        }
-
-        return list;
     }
 
     public static void putIconInCache(Context context, String packageName, Drawable d) {
@@ -425,5 +388,17 @@ public class IconUtils {
                 + File.separator + "icons" + File.separator + packageName + ".png";
         Bitmap b = BitmapFactory.decodeFile(file);
         return new BitmapDrawable(context.getResources(), b);
+    }
+
+    public static void uninstallIcons(Context context) {
+        String d = DeviceSingleton.getInstance().getOverlayFolder();
+        File overlay = new File(d);
+        Utils.remount("rw");
+        for (File file : overlay.listFiles()) {
+            if (file.getName().contains("icon")) {
+                Utils.deleteFile(file.getAbsolutePath());
+            }
+        }
+        Utils.remount("ro");
     }
 }

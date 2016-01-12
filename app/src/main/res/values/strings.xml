@@ -1,5 +1,10 @@
 <resources xmlns:https="http://schemas.android.com/apk/res-auto">
 
+    <!-- Nav Drawer -->
+    <string name="themes_title">Themes</string>
+    <string name="icons_title">Icons</string>
+    <string name="bootanimation_title">Boot Animation</string>
+
     <!-- MAIN Fragment -->
     <string name="layersmanager">Layers Manager</string>
     <string name="PlaystoreSearch"><![CDATA[

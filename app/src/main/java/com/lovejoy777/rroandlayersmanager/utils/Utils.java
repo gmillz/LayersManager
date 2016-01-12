@@ -1,11 +1,20 @@
 package com.lovejoy777.rroandlayersmanager.utils;
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.util.Log;
+import android.widget.TabHost;
 
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
+import com.lovejoy777.rroandlayersmanager.helper.AndroidXMLDecompress;
+import com.lovejoy777.rroandlayersmanager.helper.Theme;
 
 import org.apache.commons.io.IOUtils;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -13,8 +22,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.ZipFile;
 
 public class Utils {
+
+    private static final String CM_THEME_NAME_TAG = "org.cyanogenmod.theme.name";
+    private static final String CM_THEME_AUTHOR_TAG = "org.cyanogenmod.theme.author";
 
     public static class CommandOutput {
         public String output;
@@ -88,7 +103,6 @@ public class Utils {
     public static CommandOutput runCommand(String cmd, boolean useRoot) {
         if (!isRootAvailable()) return null;
         CommandOutput output = new CommandOutput();
-        Log.d("TEST", "command=" + cmd);
         try {
             Process process = Runtime.getRuntime().exec(useRoot ? "su" : "sh");
             DataOutputStream os = new DataOutputStream(
@@ -100,7 +114,6 @@ public class Utils {
             output.exitCode = process.waitFor();
             output.output = IOUtils.toString(process.getInputStream());
             output.error = IOUtils.toString(process.getErrorStream());
-            Log.d("TEST", "error=\n" + output.error + "\nout=\n" + output.output);
             if (output.exitCode != 0 || (!"".equals(output.error) && null != output.error)) {
                 Log.e("Root Error, cmd: " + cmd, output.error);
                 return output;
@@ -132,7 +145,6 @@ public class Utils {
             }
             boolean res = true;
             for (String file : files) {
-                Log.d("TEST", "file=" + file);
                 if (assetManager.list(fromAssetPath + "/" + file).length == 0) {
                     res &= copyAsset(assetManager,
                             fromAssetPath + "/" + file,
@@ -183,5 +195,94 @@ public class Utils {
         while ((read = in.read(buffer)) != -1) {
             out.write(buffer, 0, read);
         }
+    }
+
+    private static List<String> sDensityBuckets = new ArrayList<>();
+
+    static {
+        sDensityBuckets.add("xxxhdpi");
+        sDensityBuckets.add("xxhdpi");
+        sDensityBuckets.add("xhdpi");
+        sDensityBuckets.add("hdpi");
+        sDensityBuckets.add("mdpi");
+        sDensityBuckets.add("ldpi");
+    }
+
+    public static List<String> getDensityBuckets() {
+        return sDensityBuckets;
+    }
+
+    public static List<Theme> getThemes(Context context) {
+        List<Theme> themes = new ArrayList<>();
+        getInstalledCMTEThemes(context, themes);
+        return themes;
+    }
+
+    private static void getInstalledCMTEThemes(Context context, List<Theme> themes) {
+        PackageManager pm = context.getPackageManager();
+        List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+        for (ApplicationInfo info : apps) {
+            CMPackageInfo packageInfo = getMetaData(context, info);
+            if (packageInfo.cmTheme) {
+                Theme theme = new Theme(context, info.packageName, true);
+                theme.setName(packageInfo.name);
+                themes.add(theme);
+            }
+        }
+    }
+
+    private static class CMPackageInfo {
+        String name;
+        String dev;
+        boolean cmTheme;
+    }
+
+    private static CMPackageInfo getMetaData(Context context, ApplicationInfo info) {
+        File file = new File(info.sourceDir);
+        CMPackageInfo packageInfo = new CMPackageInfo();
+        ZipFile zip;
+        InputStream manifestInputStream;
+        byte[] array;
+
+        try {
+            Context appContext = context.createPackageContext(info.packageName, 0);
+            zip = new ZipFile(file);
+            manifestInputStream = zip.getInputStream(zip.getEntry("AndroidManifest.xml"));
+            array = IOUtils.toByteArray(manifestInputStream);
+            String manifest = AndroidXMLDecompress.decompressXML(array);
+            XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
+            parser.setInput(IOUtils.toInputStream(manifest), null);
+            while (parser.next() != XmlPullParser.END_DOCUMENT) {
+                String name = parser.getName();
+                if (name.equals("meta-data")) {
+                    int size = parser.getAttributeCount();
+                    for (int i = 0; i < size; i++) {
+                        String attrName = parser.getAttributeName(i);
+                        String attrValue = parser.getAttributeValue(i);
+                        if (attrName.equals("name")) {
+                            if (attrValue.equals(CM_THEME_NAME_TAG)
+                                    || attrValue.equals(CM_THEME_AUTHOR_TAG)) {
+                                i++;
+                                String v = parser.getAttributeValue(i);
+                                if (attrValue.equals(CM_THEME_NAME_TAG)) {
+                                    packageInfo.name = appContext.getResources()
+                                            .getString(Integer.parseInt(v));
+                                } else if (attrValue.equals(CM_THEME_AUTHOR_TAG)) {
+                                    packageInfo.dev = appContext.getResources()
+                                            .getString(Integer.parseInt(v));
+                                }
+                                packageInfo.cmTheme = true;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (PackageManager.NameNotFoundException | IOException e) {
+            e.printStackTrace();
+        } catch (NumberFormatException | XmlPullParserException e) {
+            // ignore - causes spam
+        }
+        return packageInfo;
     }
 }

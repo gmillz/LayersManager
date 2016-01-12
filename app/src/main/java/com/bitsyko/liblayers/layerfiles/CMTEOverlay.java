@@ -45,18 +45,12 @@ public class CMTEOverlay extends LayerFile {
         File resDir = new File(mPackageDir + File.separator + "res");
         resDir.mkdirs();
 
-        Log.d("TEST", "dir=" + resDir);
-
         Utils.copyAssetFolder(layer.getAssetManager(), "overlays/"
                 + targetPackage + "/res", resDir.getAbsolutePath());
     }
 
     public void createOverlay() {
         mOverlay.create();
-    }
-
-    public File getResDir() {
-        return mOverlay.getResDir();
     }
 
     public File getFile(Context context) {

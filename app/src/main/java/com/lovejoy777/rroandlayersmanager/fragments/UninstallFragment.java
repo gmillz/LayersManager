@@ -1,5 +1,6 @@
 package com.lovejoy777.rroandlayersmanager.fragments;
 
+import android.app.Fragment;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
@@ -41,7 +42,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class UninstallFragment extends android.support.v4.app.Fragment implements AsyncResponse {
+public class UninstallFragment extends Fragment implements AsyncResponse {
 
     android.support.v7.widget.Toolbar toolbar;
     TextView toolbarTitle;
@@ -49,7 +50,6 @@ public class UninstallFragment extends android.support.v4.app.Fragment implement
     private LinearLayout mLinearLayout;
     private CoordinatorLayout cordLayout = null;
     private ArrayList<CheckBox> checkBoxes = new ArrayList<>();
-    private int mode;
     private ActionMode mActionMode;
 
     @Override
@@ -58,7 +58,6 @@ public class UninstallFragment extends android.support.v4.app.Fragment implement
         cordLayout = (CoordinatorLayout) inflater.inflate(R.layout.fragment_delete, container, false);
 
         Bundle bundle = getArguments();
-        mode = bundle.getInt("Mode");
         ((NavigationView) getActivity().findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
 
         toolbar = (android.support.v7.widget.Toolbar) getActivity().findViewById(R.id.toolbar);
@@ -75,13 +74,6 @@ public class UninstallFragment extends android.support.v4.app.Fragment implement
                 ViewGroup.LayoutParams.MATCH_PARENT, height
         );
 
-        ViewPager viewPager = (ViewPager) getActivity().findViewById(R.id.tabanim_viewpager);
-        TabLayout tabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
-        viewPager.setVisibility(View.VISIBLE);
-        tabLayout.setVisibility(View.VISIBLE);
-
-        AppBarLayout appbar = (AppBarLayout) getActivity().findViewById(R.id.appBarlayout);
-        appbar.setElevation(0);
         toolbar.setElevation(elevation);
         toolbar.setLayoutParams(layoutParams);
 
@@ -235,17 +227,10 @@ public class UninstallFragment extends android.support.v4.app.Fragment implement
 
             List<FileBean> fileBeans = new ArrayList<>();
 
-            System.out.println(mode);
             for (File file : files) {
-                if (mode == 0) {
                     if (!file.getAbsolutePath().contains("signed.")) {
                         fileBeans.add(new FileBean(file));
                     }
-                } else {
-                    if (file.getAbsolutePath().contains("signed.")) {
-                        fileBeans.add(new FileBean(file));
-                    }
-                }
             }
 
             Collections.sort(fileBeans, new Comparator<FileBean>() {
