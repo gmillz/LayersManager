@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,6 +45,10 @@ public class Theme {
         loadTheme();
     }
 
+    public String getPackageName() {
+        return mPackageName;
+    }
+
     public String getName() {
         return mName;
     }
@@ -75,7 +80,9 @@ public class Theme {
             String[] assets = am.list("");
 
             for (String asset : assets) {
+                Log.d("TEST", asset);
                 if (asset.equals("bootanimation")) {
+                    Log.d("TEST", "has bootanimation");
                     for (String b : am.list(asset)) {
                         if (am.list(b).length == 0) {
                             mSingleBootAnimation = true;

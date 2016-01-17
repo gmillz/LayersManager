@@ -249,6 +249,11 @@ public class IconPack {
         }
     }
 
+    public static boolean isIconPack(Context context, String packageName) {
+        Map<String, IconPackInfo> map = getSupportedPackages(context);
+        return map.keySet().contains(packageName);
+    }
+
     private Drawable getDrawableForName(ComponentName name) {
         if (isIconPackLoaded()) {
             String item = mIconPackResources.get(name);

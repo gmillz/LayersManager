@@ -159,6 +159,7 @@ public class menu extends AppCompatActivity
                                 break;
                             // Boot Animations
                             case R.id.nav_bootanimation:
+                                menuItem.setChecked(true);
                                 changeFragment(id);
                                 break;
                             //Uninstall

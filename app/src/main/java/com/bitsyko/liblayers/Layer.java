@@ -141,6 +141,16 @@ public class Layer implements Closeable, LayerInfo {
         return null;
     }
 
+    public static boolean isLayer(Context context, String packageName) {
+        List<Layer> layers = getLayersInSystem(context);
+        for (Layer layer : layers) {
+            if (layer.packageName.equals(packageName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static List<Layer> getLayersInSystem(Context context) {
 
         List<Layer> layerList = new ArrayList<>();

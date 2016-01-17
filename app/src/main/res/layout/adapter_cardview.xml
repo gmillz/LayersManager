@@ -29,7 +29,7 @@
 
         <TextView
             android:id="@+id/txtName"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/iv_themeImage"
             android:layout_marginTop="12dp"
@@ -41,7 +41,7 @@
 
         <TextView
             android:id="@+id/txtSurname"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignStart="@+id/txtName"
             android:layout_below="@+id/txtName"

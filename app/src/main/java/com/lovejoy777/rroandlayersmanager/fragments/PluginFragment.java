@@ -2,8 +2,11 @@ package com.lovejoy777.rroandlayersmanager.fragments;
 
 import android.app.ActivityOptions;
 import android.app.Fragment;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -24,13 +27,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bitsyko.LayerInfo;
 import com.bitsyko.Placeholder;
-import com.bitsyko.libicons.IconPack;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.adapters.CardViewAdapter;
@@ -40,48 +41,58 @@ import com.lovejoy777.rroandlayersmanager.helper.ThemeLoader;
 import com.lovejoy777.rroandlayersmanager.menu;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 public class PluginFragment extends Fragment {
 
-    public int sortMode;
-    RecyclerView recList = null;
-    CardViewAdapter ca = null;
-    ItemTouchHelper.SimpleCallback simpleItemTouchCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+    private int mSortMode;
+
+    private RecyclerView mRecyclerView;
+    private CardViewAdapter mCardAdapter;
+    private Boolean mNoOverlays = false;
+    private CoordinatorLayout mLayout = null;
+    private SwipeRefreshLayout mSwipeRefresh;
+
+    ItemTouchHelper.SimpleCallback mItemTouchCallback =
+            new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
         @Override
-        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+        public boolean onMove(RecyclerView recyclerView,
+                              RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
             return false;
         }
 
         @Override
         public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
             //Remove swiped item from list and notify the RecyclerView
-            String packageName = ca.getLayerFromPosition(viewHolder.getAdapterPosition()).getPackageName();
+            String packageName = mCardAdapter.getLayerFromPosition(
+                    viewHolder.getAdapterPosition()).getPackageName();
             Uri packageURI = Uri.parse("package:" + packageName);
             Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageURI);
             startActivityForResult(uninstallIntent, 1);
         }
     };
-    private Boolean noOverlays = false;
-    private CoordinatorLayout cordLayout = null;
-    private SwipeRefreshLayout mSwipeRefresh;
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
 
-        cordLayout = (CoordinatorLayout) inflater.inflate(R.layout.fragment_plugins, container, false);
+        mLayout =
+                (CoordinatorLayout) inflater.inflate(R.layout.fragment_plugins, container, false);
 
-        ((DrawerLayout) getActivity().findViewById(R.id.drawer_layout)).setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-        ((NavigationView) getActivity().findViewById(R.id.nav_view)).getMenu().getItem(0).setChecked(true);
+        ((DrawerLayout) getActivity().findViewById(R.id.drawer_layout))
+                .setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+        ((NavigationView) getActivity().findViewById(R.id.nav_view))
+                .getMenu().getItem(0).setChecked(true);
         Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
 
         TextView toolbarTitle = (TextView) getActivity().findViewById(R.id.title2);
         toolbarTitle.setText(getString(R.string.themes_title));
 
-        int elevation = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0, getResources().getDisplayMetrics());
-        int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        int elevation = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 0, getResources().getDisplayMetrics());
+        int height = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
 
         AppBarLayout.LayoutParams layoutParams = new AppBarLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, height);
@@ -92,18 +103,26 @@ public class PluginFragment extends Fragment {
 
         LoadRecyclerViewFabToolbar();
 
-        sortMode = Commands.getSortMode(getActivity());
+        mSortMode = Commands.getSortMode(getActivity());
 
         refreshList();
 
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                refreshList();
+            }
+        };
+        IntentFilter filter = new IntentFilter(ThemeLoader.LAYERS_LOADED);
+        getActivity().registerReceiver(receiver, filter);
         setHasOptionsMenu(true);
 
-        return cordLayout;
+        return mLayout;
     }
 
     private void LoadRecyclerViewFabToolbar() {
         //create RecyclerView
-        RecyclerView recyclerCardViewList = (RecyclerView) cordLayout.findViewById(R.id.cardList);
+        RecyclerView recyclerCardViewList = (RecyclerView) mLayout.findViewById(R.id.cardList);
         recyclerCardViewList.setHasFixedSize(true);
         recyclerCardViewList.addOnItemTouchListener(
                 new RecyclerItemClickListener(getActivity(), new RecyclerItemClickListener.OnItemClickListener() {
@@ -119,11 +138,11 @@ public class PluginFragment extends Fragment {
         recyclerCardViewList.setLayoutManager(llm);
 
 
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mItemTouchCallback);
         itemTouchHelper.attachToRecyclerView(recyclerCardViewList);
 
         //create FAB
-        FloatingActionButton fab = (FloatingActionButton) cordLayout.findViewById(R.id.fab3);
+        FloatingActionButton fab = (FloatingActionButton) mLayout.findViewById(R.id.fab3);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -131,7 +150,7 @@ public class PluginFragment extends Fragment {
             }
         });
 
-        mSwipeRefresh = (SwipeRefreshLayout) cordLayout.findViewById(R.id.swipeRefreshLayout);
+        mSwipeRefresh = (SwipeRefreshLayout) mLayout.findViewById(R.id.swipeRefreshLayout);
         mSwipeRefresh.setColorSchemeResources(R.color.accent);
         mSwipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -145,20 +164,27 @@ public class PluginFragment extends Fragment {
     private List<Placeholder> createList2() {
 
         List<Placeholder> result = new ArrayList<>();
-        result.add(new Placeholder(getString(R.string.tooBad), getString(R.string.noPlugins), getResources().getDrawable(R.drawable.ic_noplugin, null)));
-        result.add(new Placeholder(getString(R.string.Showcase), getString(R.string.ShowCaseMore), getResources().getDrawable(R.mipmap.ic_launcher, null)));
-        result.add(new Placeholder(getString(R.string.PlayStore), getString(R.string.PlayStoreMore), getResources().getDrawable(R.drawable.playstore, null)));
+        result.add(new Placeholder(getString(R.string.tooBad), getString(R.string.noPlugins),
+                getResources().getDrawable(R.drawable.ic_noplugin, null)));
+        result.add(new Placeholder(getString(R.string.Showcase),
+                getString(R.string.ShowCaseMore),
+                getResources().getDrawable(R.mipmap.ic_launcher, null)));
+        result.add(new Placeholder(getString(R.string.PlayStore),
+                getString(R.string.PlayStoreMore),
+                getResources().getDrawable(R.drawable.playstore, null)));
         return result;
     }
 
     //open Plugin page after clicked on a cardview
     protected void onListItemClick(int position) {
-        if (!noOverlays) {
-            ((menu) getActivity()).openOverlayDetailActivity((Layer) ca.getLayerFromPosition(position));
+        if (!mNoOverlays) {
+            ((menu) getActivity()).openOverlayDetailActivity(
+                    (Layer) mCardAdapter.getLayerFromPosition(position));
         } else {
             //PlayStore
             if (position == 2) {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.PlaystoreSearch))));
+                startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse(getString(R.string.PlaystoreSearch))));
             }
             //Showcase
             if (position == 1) {
@@ -191,7 +217,7 @@ public class PluginFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
         menuInflater.inflate(R.menu.menu_pluginlist, menu);
-        switch (sortMode) {
+        switch (mSortMode) {
             default:
                 menu.findItem(R.id.menu_sortName).setChecked(true);
                 break;
@@ -242,15 +268,15 @@ public class PluginFragment extends Fragment {
         protected void onPostExecute(List<? extends LayerInfo> result) {
 
             if (result.size() > 0) {
-                ca = new CardViewAdapter(result);
+                mCardAdapter = new CardViewAdapter(result);
             } else {
-                ca = new CardViewAdapter(createList2());
-                noOverlays = true;
+                mCardAdapter = new CardViewAdapter(createList2());
+                mNoOverlays = true;
             }
 
-            recList = (RecyclerView) cordLayout.findViewById(R.id.cardList);
-            recList.setHasFixedSize(true);
-            recList.setAdapter(ca);
+            mRecyclerView = (RecyclerView) mLayout.findViewById(R.id.cardList);
+            mRecyclerView.setHasFixedSize(true);
+            mRecyclerView.setAdapter(mCardAdapter);
             mSwipeRefresh.setRefreshing(false);
         }
 
@@ -264,14 +290,14 @@ public class PluginFragment extends Fragment {
 
             List<Layer> layerList = ThemeLoader.getInstance(null).getLayers();
 
-            sortMode = Commands.getSortMode(getActivity());
-            if (sortMode == 1) {
+            mSortMode = Commands.getSortMode(getActivity());
+            if (mSortMode == 1) {
                 //Alphabetically NAME
                 Collections.sort(layerList, LayerInfo.compareName);
-            } else if (sortMode == 2) {
+            } else if (mSortMode == 2) {
                 //Alphabetically DEVELOPER
                 Collections.sort(layerList, LayerInfo.compareDev);
-            } else if (sortMode == 3) {
+            } else if (mSortMode == 3) {
                 //RANDOM
                 Collections.shuffle(layerList, new Random());
             }
@@ -281,34 +307,4 @@ public class PluginFragment extends Fragment {
         }
 
     }
-
-    private class FillIconPackList extends LoadStuff {
-
-        @Override
-        protected List<? extends LayerInfo> doInBackground(Void... params) {
-
-            Collection<IconPack.IconPackInfo> layerList =
-                    IconPack.getSupportedPackages(PluginFragment.this.getActivity()).values();
-            List<IconPack.IconPackInfo> layers = new ArrayList<>();
-
-            for (IconPack.IconPackInfo info : layerList) {
-                layers.add(info);
-            }
-
-            sortMode = Commands.getSortMode(getActivity());
-
-            //We don't have developer in icon pack
-            if (sortMode == 1 || sortMode == 2) {
-                //Alphabetically NAME
-                Collections.sort(layers, LayerInfo.compareName);
-            } else if (sortMode == 3) {
-                //RANDOM
-                Collections.shuffle(layers, new Random());
-            }
-
-            return layers;
-        }
-
-    }
-
 }

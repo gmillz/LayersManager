@@ -13,4 +13,10 @@ public class LayersApplication extends Application {
         super.onCreate();
         mThemeLoader = ThemeLoader.getInstance(getApplicationContext());
     }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        mThemeLoader.unregisterPackageReceiver();
+    }
 }

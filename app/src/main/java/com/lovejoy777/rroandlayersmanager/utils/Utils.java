@@ -225,6 +225,7 @@ public class Utils {
         for (ApplicationInfo info : apps) {
             CMPackageInfo packageInfo = getMetaData(context, info);
             if (packageInfo.cmTheme) {
+                Log.d("TEST", info.packageName);
                 Theme theme = new Theme(context, info.packageName, true);
                 theme.setName(packageInfo.name);
                 themes.add(theme);
@@ -251,6 +252,7 @@ public class Utils {
             manifestInputStream = zip.getInputStream(zip.getEntry("AndroidManifest.xml"));
             array = IOUtils.toByteArray(manifestInputStream);
             String manifest = AndroidXMLDecompress.decompressXML(array);
+            if (!manifest.contains("cyanogenmod")) return packageInfo;
             XmlPullParser parser = XmlPullParserFactory.newInstance().newPullParser();
             parser.setInput(IOUtils.toInputStream(manifest), null);
             while (parser.next() != XmlPullParser.END_DOCUMENT) {

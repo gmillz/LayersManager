@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
@@ -53,7 +52,6 @@ import com.lovejoy777.rroandlayersmanager.interfaces.StoppableAsyncTask;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.CreateList;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.ShowAllPackagesFromLayer;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.ShowPackagesFromList;
-import com.lovejoy777.rroandlayersmanager.overlaycreator.CMTETheme;
 import com.lovejoy777.rroandlayersmanager.utils.OverlayParser;
 import com.lovejoy777.rroandlayersmanager.views.CheckBoxHolder;
 
@@ -76,6 +74,8 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
     private LoadDrawables imageLoader;
     private List<StoppableAsyncTask<Void, ?, ?>> loadLayerApks = new ArrayList<>();
     private boolean isCMTETheme;
+
+    private ArrayList<Layer> mSelected = new ArrayList<>();
 
     private CheckBoxHolder.CheckBoxHolderCallback checkBoxHolderCallback = new CheckBoxHolder.CheckBoxHolderCallback() {
         @Override
@@ -111,7 +111,8 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
         cordLayout.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 v.removeOnLayoutChangeListener(this);
                 loadBackdrop();
             }
