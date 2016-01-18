@@ -98,6 +98,7 @@ public class BootAniImageView extends ImageView {
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inBitmap = mBuffers[mWriteBufferIndex];
         opts.inPreferredConfig = Bitmap.Config.RGB_565;
+        opts.inMutable = true;
         final BootAnimationHelper.AnimationPart part = mAnimationParts.get(mCurrentPart);
         try {
             mBuffers[mWriteBufferIndex] =

@@ -28,6 +28,9 @@
             android:id="@+id/nav_bootanimation"
             android:title="@string/bootanimation_title" />
         <item
+            android:id="@+id/nav_wallpaper"
+            android:title="Wallpaper" />
+        <item
             android:id="@+id/nav_delete"
             android:icon="@drawable/ic_drawer_delete"
             android:title="@string/UninstallOverlays" />

@@ -4,8 +4,10 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.text.TextUtils;
 import android.util.Log;
-import android.widget.TabHost;
 
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.helper.AndroidXMLDecompress;
@@ -126,10 +128,17 @@ public class Utils {
     }
 
     public static boolean remount(String mountType) {
-        if (!isRootAvailable()) return false;
         String folder = DeviceSingleton.getInstance().getMountFolder();
-        CommandOutput out = runCommand("mount -o remount," + mountType + " " + folder + "\n", true);
-        return true;
+        return remount(mountType, folder);
+    }
+
+    public static boolean remount(String mountType, String location) {
+        if (!isRootAvailable()) return false;
+
+        CommandOutput out = runCommand("mount -o remount,"
+                + mountType + " " + location + "\n", true);
+
+        return out != null && out.exitCode == 0;
     }
 
     public static boolean isRootAvailable() {
@@ -214,8 +223,13 @@ public class Utils {
 
     public static List<Theme> getThemes(Context context) {
         List<Theme> themes = new ArrayList<>();
+        getSystemTheme(context, themes);
         getInstalledCMTEThemes(context, themes);
         return themes;
+    }
+
+    private static void getSystemTheme(Context context, List<Theme> themes) {
+        themes.add(new Theme(context, Theme.SYSTEM_THEME, false));
     }
 
     private static void getInstalledCMTEThemes(Context context, List<Theme> themes) {
@@ -248,6 +262,9 @@ public class Utils {
 
         try {
             Context appContext = context.createPackageContext(info.packageName, 0);
+            // first check for any assets to speed this up
+            AssetManager am = appContext.getAssets();
+            if (!ThemeUtils.assetsContainThemeParts(am)) return packageInfo;
             zip = new ZipFile(file);
             manifestInputStream = zip.getInputStream(zip.getEntry("AndroidManifest.xml"));
             array = IOUtils.toByteArray(manifestInputStream);
@@ -286,5 +303,56 @@ public class Utils {
             // ignore - causes spam
         }
         return packageInfo;
+    }
+
+    public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        return calculateInSampleSize(options.outWidth, options.outHeight, reqWidth, reqHeight);
+    }
+
+    // Modified from original source:
+    // http://developer.android.com/training/displaying-bitmaps/load-bitmap.html
+    public static int calculateInSampleSize(
+            int decodeWidth, int decodeHeight, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        int inSampleSize = 1;
+
+        if (decodeHeight > reqHeight || decodeWidth > reqWidth) {
+            final int halfHeight = decodeHeight / 2;
+            final int halfWidth = decodeWidth / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight &&
+                    (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
+    /**
+     * For excessively large images with an awkward ratio we
+     * will want to crop them
+     * @return
+     */
+    public static Rect getCropRectIfNecessary(
+            BitmapFactory.Options options,int reqWidth, int reqHeight) {
+        Rect rect = null;
+        // Determine downsampled size
+        int width = options.outWidth / options.inSampleSize;
+        int height = options.outHeight / options.inSampleSize;
+
+        if ((reqHeight * 1.5 < height)) {
+            int bottom = height/ 4;
+            int top = bottom + height/2;
+            rect = new Rect(0, bottom, width, top);
+        } else if ((reqWidth * 1.5 < width)) {
+            int left = width / 4;
+            int right = left + height/2;
+            rect = new Rect(left, 0, right, height);
+        }
+        return rect;
     }
 }

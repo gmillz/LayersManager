@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
@@ -40,8 +39,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -157,10 +154,6 @@ public class IconUtils {
             colorFilter = iconPack.getColorFilter();
             defaultSwatchColor = iconPack.getDefaultSwatchColor();
         }
-
-        Log.d("TEST", "iconUpon is null ? " + String.valueOf(iconUpon == null));
-        Log.d("TEST", "iconMask is null ? " + String.valueOf(iconMask == null));
-        Log.d("TEST", "iconSize == " + iconPack.getIconSize());
 
         icon = resize(context.getResources(), icon, iconPack.getIconSize());
         icon = shadeIcon(context.getResources(), icon, iconPack.getIconShader());

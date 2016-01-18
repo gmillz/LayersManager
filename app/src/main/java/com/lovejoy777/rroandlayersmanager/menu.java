@@ -30,6 +30,7 @@ import com.lovejoy777.rroandlayersmanager.fragments.IconFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.InstallFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.PluginFragment;
 import com.lovejoy777.rroandlayersmanager.fragments.UninstallFragment;
+import com.lovejoy777.rroandlayersmanager.fragments.WallpaperFragment;
 import com.lovejoy777.rroandlayersmanager.helper.Tutorial;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 import com.rubengees.introduction.IntroductionActivity;
@@ -162,6 +163,11 @@ public class menu extends AppCompatActivity
                                 menuItem.setChecked(true);
                                 changeFragment(id);
                                 break;
+                            // Wallpapers
+                            case R.id.nav_wallpaper:
+                                menuItem.setChecked(true);
+                                changeFragment(id);
+                                break;
                             //Uninstall
                             case R.id.nav_delete:
                                 menuItem.setChecked(true);
@@ -235,6 +241,9 @@ public class menu extends AppCompatActivity
                 break;
             case R.id.nav_bootanimation:
                 fragment = new BootAnimationFragment();
+                break;
+            case R.id.nav_wallpaper:
+                fragment = new WallpaperFragment();
                 break;
             case R.id.nav_delete:
                 fragment = new UninstallFragment();
