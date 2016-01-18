@@ -9,14 +9,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.BitmapRegionDecoder;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.lovejoy777.rroandlayersmanager.fragments.WallpaperFragment;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
 import com.lovejoy777.rroandlayersmanager.utils.ThemeUtils;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
@@ -49,7 +47,7 @@ public class Theme {
 
     // boot animation support
     private boolean mHasBootAnimations = false;
-    private boolean mSingleBootAnimation = true;
+    private ArrayList<String> mBootAnimations = new ArrayList<>();
 
     // wallpapers
     private boolean mHasWallpapers = false;
@@ -182,10 +180,13 @@ public class Theme {
         return mHasBootAnimations;
     }
 
+    public boolean containsWallpapers() {
+        return mHasWallpapers;
+    }
+
     private void loadTheme() {
         if (isSystemTheme()) {
             mHasBootAnimations = true;
-            mSingleBootAnimation = true;
             mHasWallpapers = true;
             mWallpapers.add("default");
             mName = "System";
@@ -201,15 +202,11 @@ public class Theme {
                 Log.d("TEST", asset);
                 if (asset.equals(ThemeUtils.THEME_BOOTANIMATION_PATH)) {
                     Log.d("TEST", "has bootanimation");
-                    for (String b : am.list(asset)) {
-                        if (am.list(b).length == 0) {
-                            mSingleBootAnimation = true;
-                        }
-                    }
+                    mBootAnimations.addAll(Arrays.asList(am.list(asset)));
                     mHasBootAnimations = true;
                 } else if (asset.equals(ThemeUtils.THEME_WALLPAPER_PATH)) {
                     Log.d("TEST", "has wallpapers : " + mPackageName);
-                    mWallpapers.addAll(Arrays.asList(am.list(ThemeUtils.THEME_WALLPAPER_PATH)));
+                    mWallpapers.addAll(Arrays.asList(am.list(asset)));
                     if (mWallpapers.size() > 0) {
                         mHasWallpapers = true;
                     }

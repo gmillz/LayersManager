@@ -88,6 +88,7 @@ public class WallpaperFragment extends Fragment {
 
         public void updateItems() {
             for (Theme theme : ThemeLoader.getInstance(null).getThemes()) {
+                if (!theme.containsWallpapers()) continue;
                 for (String name : theme.getWallpapers()) {
                     Bitmap bitmap = theme.getWallpaperFromAssets(name);
                     if (bitmap != null) mWallpapers.add(new Item(bitmap, theme.getAssets(), name));
