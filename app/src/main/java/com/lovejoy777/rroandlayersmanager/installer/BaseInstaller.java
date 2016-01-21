@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 
 import com.bitsyko.liblayers.layerfiles.LayerFile;
+import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.utils.ThemeUtils;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
@@ -37,8 +38,21 @@ public abstract class BaseInstaller {
         mProgessDialog.setCancelable(false);
     }
 
+    protected void setMax(int i) {
+        mProgessDialog.setMax(i);
+    }
+
     public void showProgressDialog() {
         mProgessDialog.show();
+    }
+
+    protected void updateProgress() {
+        int progress = mProgessDialog.getProgress() + 1;
+        if (progress == mProgessDialog.getMax()) {
+            hideProgressDialog();
+            Commands.sendFinishedBroadcast(mContext);
+        }
+        mProgessDialog.setProgress(progress);
     }
 
     public void hideProgressDialog() {

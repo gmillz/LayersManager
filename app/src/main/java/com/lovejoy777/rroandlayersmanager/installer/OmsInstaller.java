@@ -4,10 +4,8 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.bitsyko.liblayers.layerfiles.LayerFile;
-import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
-import java.io.File;
 import java.util.List;
 
 public class OmsInstaller extends BaseInstaller {
@@ -18,12 +16,11 @@ public class OmsInstaller extends BaseInstaller {
 
     @Override
     public void installOverlays(final List<LayerFile> layers) {
+        setMax(layers.size());
         showProgressDialog();
         for (LayerFile layer : layers) {
             new InstallOverlay(layer).executeOnExecutor(mExecutor);
         }
-        hideProgressDialog();
-        Commands.sendFinishedBroadcast(mContext);
     }
 
     private class InstallOverlay extends AsyncTask<Void, Void, Void> {
@@ -38,6 +35,10 @@ public class OmsInstaller extends BaseInstaller {
             installPackage(layer.getFile(mContext).getAbsolutePath());
             enableTheme(layer.getPackageName(mContext));
             return null;
+        }
+
+        protected void onPostExecute(Void v) {
+            updateProgress();
         }
     }
 
