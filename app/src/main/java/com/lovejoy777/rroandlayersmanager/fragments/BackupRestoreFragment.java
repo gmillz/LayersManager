@@ -41,8 +41,6 @@ import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -347,16 +345,8 @@ public class BackupRestoreFragment extends Fragment {
         protected Void doInBackground(String... params) {
             String backupName = params[0];
             backupName = Environment.getExternalStorageDirectory() + "/Overlays/Backup/" + backupName;
-
-            try {
-                FileUtils.deleteDirectory(new File(backupName));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
+            Utils.deleteFile(new File(backupName).getParent());
             return null;
-
         }
 
         protected void onPostExecute(Void result) {

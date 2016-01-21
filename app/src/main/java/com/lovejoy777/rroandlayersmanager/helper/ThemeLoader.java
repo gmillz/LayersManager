@@ -7,7 +7,6 @@ import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.text.TextUtils;
 
-import com.bitsyko.libicons.IconPack;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.fragments.IconFragment;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
@@ -22,12 +21,10 @@ import java.util.concurrent.Executors;
 
 public class ThemeLoader {
 
-    public static final String ICON_PACKS_LOADED = "icon_packs_loaded";
     public static final String LAYERS_LOADED = "layers_loaded";
     public static final String ICONS_LOADED = "icons_loaded";
     public static final String THEMES_LOADED = "themes_loaded";
 
-    private static final Intent sIconPacksLoadedIntent = new Intent(ICON_PACKS_LOADED);
     private static final Intent sLayersLoadedIntent = new Intent(LAYERS_LOADED);
     private static final Intent sIconsLoadedIntent = new Intent(ICONS_LOADED);
     private static final Intent sThemesLoadedIntent = new Intent(THEMES_LOADED);
@@ -35,7 +32,6 @@ public class ThemeLoader {
     private Context mContext;
 
     private List<Layer> mLayers = new ArrayList<>();
-    private List<IconPack> mIconPacks = new ArrayList<>();
     private List<IconFragment.Item> mIcons = new ArrayList<>();
     private List<Theme> mThemes = new ArrayList<>();
 
@@ -54,7 +50,6 @@ public class ThemeLoader {
         mContext = context;
         populateThemes();
         populateLayers();
-        populateIconPacks();
         populateIcons();
     }
 
@@ -72,10 +67,6 @@ public class ThemeLoader {
 
     public List<Layer> getLayers() {
         return mLayers;
-    }
-
-    public List<IconPack> getIconPacks() {
-        return mIconPacks;
     }
 
     public List<IconFragment.Item> getIcons() {
@@ -98,21 +89,6 @@ public class ThemeLoader {
         }.executeOnExecutor(mExecutor);
     }
 
-    private void populateIconPacks() {
-        new AsyncTask<Void, Void, Void>() {
-            protected Void doInBackground(Void... v) {
-                mIconPacks = IconPack.getIconPacks(mContext);
-                IconPack defaultPack = new IconPack(mContext, "default");
-                mIconPacks.add(defaultPack);
-                Collections.sort(mIconPacks, ICON_PACK_COMPARATOR);
-                return null;
-            }
-            protected void onPostExecute(Void v) {
-                mContext.sendBroadcast(sIconPacksLoadedIntent);
-            }
-        }.executeOnExecutor(mExecutor);
-    }
-
     private void populateIcons() {
         new AsyncTask<Void, Void, Void>() {
             protected Void doInBackground(Void... v) {
@@ -131,6 +107,7 @@ public class ThemeLoader {
             @Override
             protected Void doInBackground(Void... voids) {
                 mThemes = Utils.getThemes(mContext);
+                Collections.sort(mThemes, THEME_COMPARATOR);
                 return null;
             }
             protected void onPostExecute(Void v) {
@@ -139,10 +116,10 @@ public class ThemeLoader {
         }.executeOnExecutor(mExecutor);
     }
 
-    private static Comparator<IconPack> ICON_PACK_COMPARATOR = new Comparator<IconPack>() {
+    private static Comparator<Theme> THEME_COMPARATOR = new Comparator<Theme>() {
         @Override
-        public int compare(IconPack iconPack, IconPack t1) {
-            return iconPack.getName().compareTo(t1.getName());
+        public int compare(Theme theme1, Theme theme2) {
+            return theme1.getName().compareTo(theme2.getName());
         }
     };
 
@@ -166,11 +143,10 @@ public class ThemeLoader {
                     || action.equals(Intent.ACTION_PACKAGE_REPLACED)) {
                 String packageName = intent.getData().getSchemeSpecificPart();
                 if (TextUtils.isEmpty(packageName)) return;
-                if (IconPack.isIconPack(context, packageName)) {
-                    populateIconPacks();
-                } else if (Layer.isLayer(context, packageName)) {
+                if (Layer.isLayer(context, packageName)) {
                     populateLayers();
                 } else {
+                    populateThemes();
                     populateIcons();
                 }
             }

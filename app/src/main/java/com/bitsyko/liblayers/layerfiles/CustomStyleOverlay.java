@@ -1,12 +1,12 @@
 package com.bitsyko.liblayers.layerfiles;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.bitsyko.liblayers.Color;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -38,7 +38,9 @@ public class CustomStyleOverlay extends LayerFile {
     @Override
     public File getFile(Context context) {
 
-        String cacheDir = context.getCacheDir() + File.separator
+        if (file != null && file.exists()) return file;
+
+        String cacheDir = Utils.getCacheDir() + File.separator
                 + StringUtils.deleteWhitespace(parentLayer.getName()) + File.separator;
 
         if (!new File(cacheDir).exists()) {
@@ -53,18 +55,19 @@ public class CustomStyleOverlay extends LayerFile {
         }
 
         File apkFile = new File(cacheDir + selectedColor.getZip());
-
+        Log.d("TEST", "selectedColor=" + selectedColor.getZip());
         try {
             ZipFile generalZipFileAsZip = new ZipFile(customStyleZipFile);
             InputStream inputStream = generalZipFileAsZip.getInputStream(
                     generalZipFileAsZip.getEntry(selectedColor.getZip()));
-
-            FileUtils.copyInputStreamToFile(inputStream, apkFile);
+            Utils.copyInputStreamToFile(inputStream, apkFile);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
 
+        apkFile.setReadable(true, false);
+        file = apkFile;
         return apkFile;
     }
 }

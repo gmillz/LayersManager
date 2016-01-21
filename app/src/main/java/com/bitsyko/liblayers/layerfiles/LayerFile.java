@@ -1,7 +1,9 @@
 package com.bitsyko.liblayers.layerfiles;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.helper.AndroidXMLDecompress;
@@ -24,6 +26,7 @@ public abstract class LayerFile implements Comparable<LayerFile> {
     protected Layer parentLayer;
     protected String name;
     protected File file;
+    protected String packageName;
 
     public LayerFile(Layer parentLayer, String name) {
         this.parentLayer = parentLayer;
@@ -31,6 +34,22 @@ public abstract class LayerFile implements Comparable<LayerFile> {
     }
 
     public abstract File getFile(Context context);
+
+    public String getPackageName(Context context) {
+        if (TextUtils.isEmpty(packageName)) {
+            if (file == null) {
+                file = getFile(context);
+            }
+            PackageInfo info =
+                    context.getPackageManager().getPackageArchiveInfo(file.getAbsolutePath(), 0);
+            if (info != null) {
+                packageName = info.packageName;
+            } else {
+                packageName = getTargetPackage() + ".overlay";
+            }
+        }
+        return packageName;
+    }
 
     public String getNiceName() {
 
@@ -40,10 +59,12 @@ public abstract class LayerFile implements Comparable<LayerFile> {
         name = StringUtils.replaceEach(name, new String[]{".apk", ".zip"}, new String[]{"", ""});
 
         //Remove plugin name
-        name = StringUtils.removeStartIgnoreCase(name, StringUtils.deleteWhitespace(parentLayer.getName()));
+        name = StringUtils.removeStartIgnoreCase(name,
+                StringUtils.deleteWhitespace(parentLayer.getName()));
 
         //Remove plugin name pt.2
-        name = StringUtils.removeStartIgnoreCase(name, StringUtils.replace(parentLayer.getName(), " ", "_"));
+        name = StringUtils.removeStartIgnoreCase(name,
+                StringUtils.replace(parentLayer.getName(), " ", "_"));
 
         //Replace _ with " "
         name = StringUtils.replace(name, "_", " ");
@@ -52,8 +73,6 @@ public abstract class LayerFile implements Comparable<LayerFile> {
         name = StringUtils.strip(name);
 
         return name;
-
-        // return StringUtils.strip(StringUtils.removeStartIgnoreCase(name.replaceAll("_", " ").replace(".apk", "").replace(".zip", ""), StringUtils.deleteWhitespace(parentLayer.getName())));
     }
 
     public String getName() {
@@ -72,7 +91,7 @@ public abstract class LayerFile implements Comparable<LayerFile> {
         return parentLayer;
     }
 
-    public String getRelatedPackage() {
+    public String getTargetPackage() {
 
         if (file == null) {
             throw new RuntimeException("No file to work on");
@@ -101,8 +120,6 @@ public abstract class LayerFile implements Comparable<LayerFile> {
         } else {
             return "Can't find related package";
         }
-
-
     }
 
     @Override

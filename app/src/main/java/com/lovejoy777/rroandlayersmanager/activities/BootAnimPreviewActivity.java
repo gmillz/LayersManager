@@ -13,11 +13,10 @@ import android.widget.Button;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.helper.Theme;
 import com.lovejoy777.rroandlayersmanager.helper.ThemeLoader;
-import com.lovejoy777.rroandlayersmanager.installer.Installer;
-import com.lovejoy777.rroandlayersmanager.utils.Utils;
+import com.lovejoy777.rroandlayersmanager.utils.ThemeUtils;
+import com.lovejoy777.rroandlayersmanager.utils.ThemesContract;
 import com.lovejoy777.rroandlayersmanager.views.BootAniImageView;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -73,8 +72,9 @@ public class BootAnimPreviewActivity extends Activity {
         apply.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new Installer(BootAnimPreviewActivity.this)
-                        .installBootAnimation(mTheme.getBootAnimationStream(mBootAnimationName));
+                ThemesContract contract = new ThemesContract();
+                contract.setBootanimation(mTheme.getBootAnimationStream(mBootAnimationName));
+                ThemeUtils.install(BootAnimPreviewActivity.this, contract);
                 finish();
             }
         });
@@ -118,7 +118,6 @@ public class BootAnimPreviewActivity extends Activity {
                 clearBootAnimationCache();
                 try {
                     Context themeContext = mContext.createPackageContext(mPkgName, 0);
-                    AssetManager am = themeContext.getAssets();
                     InputStream is = mTheme.getBootAnimationStream(mBootAnimationName);
                     //Utils.copyAsset(am, "bootanimation/bootanimation.zip", f.getAbsolutePath());
                     FileOutputStream fos = new FileOutputStream(f);

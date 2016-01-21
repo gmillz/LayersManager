@@ -1,8 +1,11 @@
 package com.lovejoy777.rroandlayersmanager;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.lovejoy777.rroandlayersmanager.helper.ThemeLoader;
+import com.lovejoy777.rroandlayersmanager.notification.NotificationHijackingService;
+import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 public class LayersApplication extends Application {
 
@@ -12,6 +15,15 @@ public class LayersApplication extends Application {
     public void onCreate() {
         super.onCreate();
         mThemeLoader = ThemeLoader.getInstance(getApplicationContext());
+        NotificationHijackingService.ensureEnabled(this);
+
+        if (Utils.omsExists()) {
+            Log.d("TEST", "OMS exists");
+        } else {
+            Log.d("TEST", "OMS does not exist");
+        }
+
+        NotificationHijackingService.putIntSecure(getContentResolver(), "advanced_reboot", 2);
     }
 
     @Override

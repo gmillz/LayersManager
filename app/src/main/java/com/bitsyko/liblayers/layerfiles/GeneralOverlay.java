@@ -5,7 +5,6 @@ import android.content.Context;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -22,9 +21,12 @@ public class GeneralOverlay extends LayerFile {
     @Override
     public File getFile(Context context) {
 
+        if (file != null && file.exists()) return file;
+
         String generalZip = parentLayer.getGeneralZip();
 
-        String cacheDir = context.getCacheDir() + File.separator + StringUtils.deleteWhitespace(parentLayer.getName()) + File.separator;
+        String cacheDir = Utils.getCacheDir() + File.separator
+                + StringUtils.deleteWhitespace(parentLayer.getName()) + File.separator;
 
         if (!new File(cacheDir).exists()) {
             new File(cacheDir).mkdirs();
@@ -32,24 +34,26 @@ public class GeneralOverlay extends LayerFile {
 
         File generalZipFile = new File(cacheDir + generalZip);
 
-        if (!generalZipFile.exists()) {
-            Utils.copyAsset(parentLayer.getAssetManager(), "Files" + File.separator
-                    + generalZip, generalZipFile.getAbsolutePath());
-
+        if (generalZipFile.exists()) {
+            generalZipFile.delete();
         }
 
+        Utils.copyAsset(parentLayer.getAssetManager(), "Files" + File.separator
+                + generalZip, generalZipFile.getAbsolutePath());
+
         File apkFile = new File(cacheDir + name);
-
         try {
-            ZipFile generalZipFileAsZip = new ZipFile(generalZipFile);
-            InputStream inputStream = generalZipFileAsZip.getInputStream(generalZipFileAsZip.getEntry(name));
-
-            FileUtils.copyInputStreamToFile(inputStream, apkFile);
-
+            ZipFile general = new ZipFile(generalZipFile);
+            InputStream is = general.getInputStream(general.getEntry(name));
+            Utils.copyInputStreamToFile(is, apkFile);
+            is.close();
+            general.close();
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
+
+        apkFile.setReadable(true, false);
 
         file = apkFile;
 

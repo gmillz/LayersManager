@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
@@ -35,6 +36,8 @@ import java.util.zip.ZipInputStream;
 
 
 public class Commands {
+
+    public static final String INSTALL_FINISHED = "com.layers.ACTION_INSTALL_FINISHED";
 
     private static final String[] aaptUrls = {
             "https://www.dropbox.com/s/au7ccu1gtroqvzt/aapt_x86?dl=1",
@@ -198,7 +201,7 @@ public class Commands {
                         ZipFile zipFile = new ZipFile(file);
 
                         while ((ze = zis.getNextEntry()) != null) {
-                            FileUtils.copyInputStreamToFile(
+                            Utils.copyInputStreamToFile(
                                     zipFile.getInputStream(ze), new File(tempDir + ze.getName()));
                         }
                     } catch (IOException e) {
@@ -293,15 +296,13 @@ public class Commands {
     public static class InstallOverlaysBetterWay extends AsyncTask<Void, String, Void> {
 
         private ProgressDialog progress;
-        private AsyncResponse delegate;
         private List<LayerFile> layersToInstall;
         private Context context;
         private int i = 0;
 
-        public InstallOverlaysBetterWay(List<LayerFile> layersToInstall, Context context, AsyncResponse delegate) {
+        public InstallOverlaysBetterWay(List<LayerFile> layersToInstall, Context context) {
             this.layersToInstall = layersToInstall;
             this.context = context;
-            this.delegate = delegate;
         }
 
         @Override
@@ -355,11 +356,13 @@ public class Commands {
         @Override
         protected void onPostExecute(Void aVoid) {
             progress.dismiss();
-            if (delegate != null) {
-                delegate.processFinish();
-            }
+            sendFinishedBroadcast(context);
         }
 
+    }
+
+    public static void sendFinishedBroadcast(Context context) {
+        context.sendBroadcast(new Intent(INSTALL_FINISHED));
     }
 
     public static class CheckAapt extends AsyncTask<Void, Void, Void> {

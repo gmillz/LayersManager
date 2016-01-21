@@ -5,6 +5,11 @@ import android.content.res.AssetManager;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
+import com.bitsyko.liblayers.layerfiles.LayerFile;
+import com.lovejoy777.rroandlayersmanager.installer.BaseInstaller;
+import com.lovejoy777.rroandlayersmanager.installer.Installer;
+import com.lovejoy777.rroandlayersmanager.installer.OmsInstaller;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -139,5 +144,21 @@ public class ThemeUtils {
             zos.closeEntry();
         }
         zos.close();
+    }
+
+    public static void install(Context context, ThemesContract contract) {
+        BaseInstaller installer;
+        if (Utils.omsExists()) {
+            installer = new OmsInstaller(context);
+        } else {
+            installer = new Installer(context);
+        }
+        if (contract.bootAnimationChanged && contract.bootAnimation != null) {
+            installer.installBootAnimation(contract.bootAnimation);
+        } else if (contract.wallpaperChanged && contract.wallpaper != null) {
+            installer.installWallpaper(contract.wallpaper);
+        } else if (contract.layers.size() > 0) {
+            installer.installOverlays(contract.layers);
+        }
     }
 }

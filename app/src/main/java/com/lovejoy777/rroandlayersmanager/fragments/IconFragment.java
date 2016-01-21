@@ -39,6 +39,7 @@ import com.bitsyko.libicons.IconPack;
 import com.bitsyko.libicons.IconPickerActivity;
 import com.lovejoy777.rroandlayersmanager.R;
 import com.lovejoy777.rroandlayersmanager.commands.Commands;
+import com.lovejoy777.rroandlayersmanager.helper.Theme;
 import com.lovejoy777.rroandlayersmanager.helper.ThemeLoader;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
 
@@ -96,7 +97,7 @@ public class IconFragment extends Fragment implements
 
         setHasOptionsMenu(true);
 
-        mIconPacks = ThemeLoader.getInstance(null).getIconPacks();
+        updateIconPacks();
 
         mCurrentIconPack = mPreferences.getString("icon_pack", "default");
 
@@ -126,8 +127,8 @@ public class IconFragment extends Fragment implements
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(ThemeLoader.ICON_PACKS_LOADED)) {
-                    mIconPacks = ThemeLoader.getInstance(null).getIconPacks();
+                if (intent.getAction().equals(ThemeLoader.THEMES_LOADED)) {
+                    updateIconPacks();
                     mIconPackAdapter.updateItems(mIconPacks);
                     mIconPackAdapter.notifyDataSetChanged();
                 } else if (intent.getAction().equals(ThemeLoader.ICONS_LOADED)) {
@@ -136,7 +137,7 @@ public class IconFragment extends Fragment implements
                 }
             }
         };
-        IntentFilter filter = new IntentFilter(ThemeLoader.ICON_PACKS_LOADED);
+        IntentFilter filter = new IntentFilter(ThemeLoader.THEMES_LOADED);
         filter.addAction(ThemeLoader.ICONS_LOADED);
         getActivity().registerReceiver(receiver, filter);
 
@@ -145,6 +146,14 @@ public class IconFragment extends Fragment implements
         toolbarTitle.setText(getString(R.string.icons_title));
 
         return view;
+    }
+
+    private void updateIconPacks() {
+        for (Theme theme : ThemeLoader.getInstance(getActivity()).getThemes()) {
+            if (theme.isIconPack()) {
+                mIconPacks.add(theme.getIconPack());
+            }
+        }
     }
 
     private void saveCustomIcons() {

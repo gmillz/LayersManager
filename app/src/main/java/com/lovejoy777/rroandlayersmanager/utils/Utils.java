@@ -6,9 +6,11 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.bitsyko.libicons.IconPack;
 import com.lovejoy777.rroandlayersmanager.DeviceSingleton;
 import com.lovejoy777.rroandlayersmanager.helper.AndroidXMLDecompress;
 import com.lovejoy777.rroandlayersmanager.helper.Theme;
@@ -18,6 +20,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import java.io.BufferedInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,6 +32,8 @@ import java.util.List;
 import java.util.zip.ZipFile;
 
 public class Utils {
+
+    public static final String TAG = "Layers.Utils";
 
     private static final String CM_THEME_NAME_TAG = "org.cyanogenmod.theme.name";
     private static final String CM_THEME_AUTHOR_TAG = "org.cyanogenmod.theme.author";
@@ -173,24 +178,17 @@ public class Utils {
 
     public static boolean copyAsset(AssetManager assetManager,
                                     String fromAssetPath, String toPath) {
-        InputStream in = null;
-        OutputStream out = null;
+        InputStream in;
 
         File parent = new File(toPath).getParentFile();
         if (!parent.exists() && !parent.mkdirs()) {
-            throw new RuntimeException();
+            Log.d(TAG, "Unable to create " + parent.getAbsolutePath());
         }
 
         try {
             in = assetManager.open(fromAssetPath);
-            new File(toPath).createNewFile();
-            out = new FileOutputStream(toPath);
-            copyFile(in, out);
+            copyInputStreamToFile(in, new File(toPath));
             in.close();
-            in = null;
-            out.flush();
-            out.close();
-            out = null;
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -198,11 +196,42 @@ public class Utils {
         }
     }
 
-    private static void copyFile(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[1024];
-        int read;
-        while ((read = in.read(buffer)) != -1) {
-            out.write(buffer, 0, read);
+    public static File getCacheDir() {
+        return new File(Environment.getExternalStorageDirectory() + "/.layers-cache");
+    }
+
+    public static boolean copyInputStreamToFile(InputStream in, File file) {
+        try {
+            if (file.exists()) {
+                if (!file.delete())
+                    Log.e(TAG, "Unable to delete " + file.getAbsolutePath());
+            }
+            File parent = file.getParentFile();
+            if (!parent.exists()) {
+                if (!parent.mkdirs())
+                    Log.e(TAG, "Unable to create " + parent.getAbsolutePath());
+            }
+
+            FileOutputStream out = new FileOutputStream(file);
+            try {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) >= 0) {
+                    out.write(buffer, 0, bytesRead);
+                }
+            } finally {
+                out.flush();
+                try {
+                    out.getFD().sync();
+                } catch (IOException e) {
+                    // ignore
+                }
+                out.close();
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -224,36 +253,43 @@ public class Utils {
     public static List<Theme> getThemes(Context context) {
         List<Theme> themes = new ArrayList<>();
         getSystemTheme(context, themes);
-        getInstalledCMTEThemes(context, themes);
+        getInstalledThemes(context, themes);
         return themes;
     }
 
     private static void getSystemTheme(Context context, List<Theme> themes) {
-        themes.add(new Theme(context, Theme.SYSTEM_THEME, false));
+        themes.add(new Theme(context, Theme.SYSTEM_THEME));
     }
 
-    private static void getInstalledCMTEThemes(Context context, List<Theme> themes) {
+    private static void getInstalledThemes(Context context, List<Theme> themes) {
         PackageManager pm = context.getPackageManager();
         List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
         for (ApplicationInfo info : apps) {
-            CMPackageInfo packageInfo = getMetaData(context, info);
-            if (packageInfo.cmTheme) {
-                Log.d("TEST", info.packageName);
-                Theme theme = new Theme(context, info.packageName, true);
-                theme.setName(packageInfo.name);
+            Theme theme = null;
+            if (IconPack.isIconPack(context, info.packageName))  {
+                theme = new Theme(context, info.packageName);
+            } else {
+                CMPackageInfo packageInfo = getMetaData(context, info);
+                if (packageInfo.cmTheme) {
+                    Log.d("TEST", info.packageName);
+                    theme = new Theme(context, info.packageName);
+                    theme.setName(packageInfo.name);
+                }
+            }
+            if (theme != null) {
                 themes.add(theme);
             }
         }
     }
 
-    private static class CMPackageInfo {
+    public static class CMPackageInfo {
         String name;
         String dev;
-        boolean cmTheme;
+        public boolean cmTheme = false;
     }
 
-    private static CMPackageInfo getMetaData(Context context, ApplicationInfo info) {
+    public static CMPackageInfo getMetaData(Context context, ApplicationInfo info) {
         File file = new File(info.sourceDir);
         CMPackageInfo packageInfo = new CMPackageInfo();
         ZipFile zip;
@@ -354,5 +390,9 @@ public class Utils {
             rect = new Rect(left, 0, right, height);
         }
         return rect;
+    }
+
+    public static boolean omsExists() {
+        return new File("/system/bin/om").exists();
     }
 }

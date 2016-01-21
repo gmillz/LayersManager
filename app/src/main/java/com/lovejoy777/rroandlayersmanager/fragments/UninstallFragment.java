@@ -6,11 +6,8 @@ import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.view.ViewPager;
 import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.LayoutInflater;
@@ -55,16 +52,16 @@ public class UninstallFragment extends Fragment implements AsyncResponse {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        cordLayout = (CoordinatorLayout) inflater.inflate(R.layout.fragment_delete, container, false);
-
-        Bundle bundle = getArguments();
-        ((NavigationView) getActivity().findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
+        cordLayout = (CoordinatorLayout)
+                inflater.inflate(R.layout.fragment_delete, container, false);
 
         toolbar = (android.support.v7.widget.Toolbar) getActivity().findViewById(R.id.toolbar);
         toolbar.setTitle(getString(R.string.UninstallOverlays));
 
-        int elevation = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0, getResources().getDisplayMetrics());
-        int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
+        int elevation = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 0, getResources().getDisplayMetrics());
+        int height = (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 56, getResources().getDisplayMetrics());
         toolbar.setNavigationIcon(R.drawable.ic_action_menu);
 
         toolbarTitle = (TextView) getActivity().findViewById(R.id.title2);
@@ -129,11 +126,13 @@ public class UninstallFragment extends Fragment implements AsyncResponse {
         ArrayList<String> paths = new ArrayList<>();
         for (CheckBox checkBox : checkBoxes) {
             if (checkBox.isChecked()) {
-                paths.add(DeviceSingleton.getInstance().getOverlayFolder() + "/" + ((FileBean) checkBox.getTag()).getLocation());
+                paths.add(DeviceSingleton.getInstance().getOverlayFolder()
+                        + "/" + ((FileBean) checkBox.getTag()).getLocation());
             }
         }
 
-        Commands.UnInstallOverlays asyncTask = new Commands.UnInstallOverlays(paths, getActivity(), this);
+        Commands.UnInstallOverlays asyncTask =
+                new Commands.UnInstallOverlays(paths, getActivity(), this);
         asyncTask.execute();
     }
 
@@ -250,7 +249,8 @@ public class UninstallFragment extends Fragment implements AsyncResponse {
             checkBoxes.clear();
             mLinearLayout.removeAllViews();
 
-            TableRow.LayoutParams layoutParams = new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
+            TableRow.LayoutParams layoutParams = new TableRow.LayoutParams(
+                    TableRow.LayoutParams.MATCH_PARENT, TableRow.LayoutParams.WRAP_CONTENT);
 
             layoutParams.topMargin = 12;
 
@@ -259,7 +259,8 @@ public class UninstallFragment extends Fragment implements AsyncResponse {
                 TableRow row = new TableRow(getActivity());
                 row.setLayoutParams(layoutParams);
 
-                // Implemented LinearLayout because a TableRow can't have more than one View added to it. LinearLayout can have, so we add a
+                // Implemented LinearLayout because a TableRow can't
+                // have more than one View added to it. LinearLayout can have, so we add a
                 // LinearLayout to TableRow
                 LinearLayout rowlayout = new LinearLayout(getActivity());
                 rowlayout.setOrientation(LinearLayout.VERTICAL);
@@ -269,12 +270,13 @@ public class UninstallFragment extends Fragment implements AsyncResponse {
                 TextView summary = new TextView(getActivity());
 
                 check.setText(fileBean.getName());
-                summary.setText(new SimpleOverlay(fileBean.getFile()).getRelatedPackage());
+                summary.setText(new SimpleOverlay(fileBean.getFile()).getTargetPackage());
 
                 check.setTag(fileBean);
                 check.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                 summary.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-                int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+                int padding = (int) TypedValue.applyDimension(
+                        TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
                 check.setPadding(padding, 0, padding, 0);
                 check.setMinHeight(0);
                 summary.setPadding(5 * padding, 0, padding, 0);

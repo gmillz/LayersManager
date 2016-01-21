@@ -18,7 +18,9 @@ public class Color implements Comparable<Color> {
     }
 
     public String getNiceName() {
-        return StringUtils.strip(StringUtils.removeStartIgnoreCase(zip.replaceAll("_", " ").replace(".zip", ""), StringUtils.deleteWhitespace(parentLayer.getName())));
+        return StringUtils.strip(StringUtils.removeStartIgnoreCase(
+                zip.replaceAll("_", " ").replace(".zip", ""),
+                StringUtils.deleteWhitespace(parentLayer.getName())));
     }
 
     public String getZip() {

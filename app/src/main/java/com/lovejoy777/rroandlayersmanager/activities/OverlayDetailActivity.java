@@ -2,8 +2,11 @@ package com.lovejoy777.rroandlayersmanager.activities;
 
 import android.animation.Animator;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -53,6 +56,8 @@ import com.lovejoy777.rroandlayersmanager.loadingpackages.CreateList;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.ShowAllPackagesFromLayer;
 import com.lovejoy777.rroandlayersmanager.loadingpackages.ShowPackagesFromList;
 import com.lovejoy777.rroandlayersmanager.utils.OverlayParser;
+import com.lovejoy777.rroandlayersmanager.utils.ThemeUtils;
+import com.lovejoy777.rroandlayersmanager.utils.ThemesContract;
 import com.lovejoy777.rroandlayersmanager.views.CheckBoxHolder;
 
 import java.io.IOException;
@@ -60,7 +65,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class OverlayDetailActivity extends AppCompatActivity implements AsyncResponse {
+public class OverlayDetailActivity extends AppCompatActivity {
 
     private CheckBox dontShowAgain;
     private ArrayList<CheckBox> checkBoxesGeneral = new ArrayList<>();
@@ -123,6 +128,15 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
         Log.d("Colors", String.valueOf(layer.getColors()));
         Log.d("PluginVersion", String.valueOf(layer.getPluginVersion()));
+
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                processFinish();
+            }
+        };
+        IntentFilter filter = new IntentFilter(Commands.INSTALL_FINISHED);
+        registerReceiver(receiver, filter);
     }
 
     private boolean isAnyCheckboxEnabled(int mode) {
@@ -646,9 +660,10 @@ public class OverlayDetailActivity extends AppCompatActivity implements AsyncRes
 
         Log.d("Choosed color", choosedStyle);
 
-        new Commands.InstallOverlaysBetterWay(layersToInstall, this, this).execute();
+        ThemesContract contract = new ThemesContract();
+        contract.setLayers(layersToInstall);
 
-
+        ThemeUtils.install(this, contract);
     }
 
     public void processFinish() {

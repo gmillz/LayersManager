@@ -10,27 +10,26 @@ import android.graphics.BitmapRegionDecoder;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 
+import com.bitsyko.liblayers.layerfiles.LayerFile;
+import com.lovejoy777.rroandlayersmanager.AsyncResponse;
+import com.lovejoy777.rroandlayersmanager.commands.Commands;
 import com.lovejoy777.rroandlayersmanager.utils.ThemeUtils;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
-public class Installer {
-
-    private Context mContext;
-
-    private ProgressDialog mProgessDialog;
+public class Installer extends BaseInstaller {
 
     public Installer(Context context) {
-        mContext = context;
+        super(context);
+    }
 
-        mProgessDialog = new ProgressDialog(mContext);
-        mProgessDialog.setTitle("Installing");
-        mProgessDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        mProgessDialog.setIndeterminate(true);
-        mProgessDialog.setCancelable(false);
+    @Override
+    public void installOverlays(List<LayerFile> layers) {
+        new Commands.InstallOverlaysBetterWay(layers, mContext).execute();
     }
 
     public void installWallpaperFromAssets(final AssetManager am,
@@ -71,12 +70,7 @@ public class Installer {
             }
 
             protected void onPostExecute(Bitmap b) {
-                WallpaperManager manager = WallpaperManager.getInstance(mContext);
-                try {
-                    manager.setBitmap(b);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                installWallpaper(b);
                 mProgessDialog.dismiss();
             }
         }.execute();

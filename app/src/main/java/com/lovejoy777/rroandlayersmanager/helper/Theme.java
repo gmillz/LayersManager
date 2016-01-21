@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.bitsyko.libicons.IconPack;
 import com.lovejoy777.rroandlayersmanager.utils.IconUtils;
 import com.lovejoy777.rroandlayersmanager.utils.ThemeUtils;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
@@ -43,8 +44,6 @@ public class Theme {
 
     private Point mDisplaySize = new Point();
 
-    private boolean mCMTETheme = false;
-
     // boot animation support
     private boolean mHasBootAnimations = false;
     private ArrayList<String> mBootAnimations = new ArrayList<>();
@@ -53,11 +52,16 @@ public class Theme {
     private boolean mHasWallpapers = false;
     private ArrayList<String> mWallpapers = new ArrayList<>();
 
-    public Theme(Context context, String packageName, boolean isCMTheme) {
+    // icons
+    private boolean mIsIconPack = false;
+    private IconPack mIconPack;
+
+    public Theme(Context context, String packageName) {
         mContext = context;
 
-        mCMTETheme = isCMTheme;
         mPackageName = packageName;
+
+        mIsIconPack = IconPack.isIconPack(context, packageName);
 
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
@@ -184,6 +188,14 @@ public class Theme {
         return mHasWallpapers;
     }
 
+    public boolean isIconPack() {
+        return mIsIconPack;
+    }
+
+    public IconPack getIconPack() {
+        return mIconPack;
+    }
+
     private void loadTheme() {
         if (isSystemTheme()) {
             mHasBootAnimations = true;
@@ -191,6 +203,12 @@ public class Theme {
             mWallpapers.add("default");
             mName = "System";
             mIcon = mContext.getDrawable(android.R.drawable.sym_def_app_icon);
+            return;
+        }
+        if (mIsIconPack) {
+            mIconPack = new IconPack(mContext, mPackageName);
+            mName = mIconPack.getName();
+            mIcon = mIconPack.getIcon();
             return;
         }
         AssetManager am = mThemeContext.getAssets();

@@ -70,9 +70,9 @@ public class CreateList extends StoppableAsyncTask<Void, Void, Pair<Set<String>,
                         layerFile.getFile(context);
                     }
 
-                    Log.d("Manifest " + layerFile.getName(), layerFile.getRelatedPackage());
+                    Log.d("Manifest " + layerFile.getName(), layerFile.getTargetPackage());
 
-                    if (!packages.contains(layerFile.getRelatedPackage())) {
+                    if (!packages.contains(layerFile.getTargetPackage())) {
                         filesToGreyOut.add(layerFile.getName());
                     }
 

@@ -6,7 +6,6 @@ import com.bitsyko.liblayers.Color;
 import com.bitsyko.liblayers.Layer;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -25,7 +24,10 @@ public class ColorOverlay extends LayerFile {
     @Override
     public File getFile(Context context) {
 
-        String cacheDir = context.getCacheDir() + File.separator + StringUtils.deleteWhitespace(parentLayer.getName()) + File.separator;
+        if (file != null && file.exists()) return file;
+
+        String cacheDir = Utils.getCacheDir() + File.separator
+                + StringUtils.deleteWhitespace(parentLayer.getName()) + File.separator;
 
         if (!new File(cacheDir).exists()) {
             new File(cacheDir).mkdirs();
@@ -39,21 +41,18 @@ public class ColorOverlay extends LayerFile {
         }
 
         File apkFile = new File(cacheDir + name);
-
         try {
             ZipFile generalZipFileAsZip = new ZipFile(colorZipFile);
-            InputStream inputStream =
-                    generalZipFileAsZip.getInputStream(generalZipFileAsZip.getEntry(name));
-
-            FileUtils.copyInputStreamToFile(inputStream, apkFile);
-
+            InputStream is = generalZipFileAsZip.getInputStream(generalZipFileAsZip.getEntry(name));
+            Utils.copyInputStreamToFile(is, apkFile);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
 
-        file = apkFile;
+        apkFile.setReadable(true, false);
 
+        file = apkFile;
         return apkFile;
     }
 
