@@ -1,7 +1,10 @@
 package com.lovejoy777.rroandlayersmanager.installer;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
+import android.os.UserHandle;
+import android.os.UserManager;
 
 import com.bitsyko.liblayers.layerfiles.LayerFile;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
@@ -32,7 +35,7 @@ public class OmsInstaller extends BaseInstaller {
         }
 
         protected Void doInBackground(Void... v) {
-            installPackage(layer.getFile(mContext).getAbsolutePath());
+            installPackage(layer);
             enableTheme(layer.getPackageName(mContext));
             return null;
         }
@@ -42,8 +45,13 @@ public class OmsInstaller extends BaseInstaller {
         }
     }
 
-    private void installPackage(String path) {
-        Utils.runCommand("pm install " + path, true);
+    private void installPackage(LayerFile layer) {
+        try {
+            mContext.getPackageManager().getPackageInfo(layer.getPackageName(mContext), 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            String path = layer.getFile(mContext).getAbsolutePath();
+            Utils.runCommand("pm install " + path, true);
+        }
     }
 
     private void enableTheme(String name) {

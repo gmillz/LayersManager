@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.lovejoy777.rroandlayersmanager.helper.ThemeLoader;
 import com.lovejoy777.rroandlayersmanager.notification.NotificationHijackingService;
+import com.lovejoy777.rroandlayersmanager.utils.OmsUtils;
 import com.lovejoy777.rroandlayersmanager.utils.Utils;
 
 public class LayersApplication extends Application {
@@ -24,6 +25,8 @@ public class LayersApplication extends Application {
         }
 
         NotificationHijackingService.putIntSecure(getContentResolver(), "advanced_reboot", 2);
+
+        new OmsUtils(this);
     }
 
     @Override

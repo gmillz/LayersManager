@@ -395,4 +395,10 @@ public class Utils {
     public static boolean omsExists() {
         return new File("/system/bin/om").exists();
     }
+
+    public static String getStringFromFile(String path) {
+        CommandOutput out = runCommand("cat " + path, true);
+        if (out != null) Log.d("TEST", out.output);
+        return out != null ? out.output : null;
+    }
 }

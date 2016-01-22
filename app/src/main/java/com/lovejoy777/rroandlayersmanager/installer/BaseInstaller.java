@@ -48,7 +48,8 @@ public abstract class BaseInstaller {
 
     protected void updateProgress() {
         int progress = mProgessDialog.getProgress() + 1;
-        if (progress == mProgessDialog.getMax()) {
+        mProgessDialog.setProgress(progress);
+        if (mProgessDialog.getMax() == mProgessDialog.getProgress()) {
             hideProgressDialog();
             Commands.sendFinishedBroadcast(mContext);
         }
