@@ -26,14 +26,17 @@ public class DeviceSingleton {
             boolean vendorDevice = false;
 
             if (mountDataArray != null) {
-                for (String mountDataLine : mountDataArray) {
+                if(mountData.contains ("/vendor")){
+                    vendorDevice = true;
+                }
+                /*for (String mountDataLine : mountDataArray) {
                     String[] anotherStringArray = StringUtils.split(mountDataLine);
                     if (anotherStringArray != null && anotherStringArray.length >= 2
                             && anotherStringArray[1].equals("/vendor")) {
                         vendorDevice = true;
                         break;
                     }
-                }
+                }*/
             }
 
             if (vendorDevice) {
