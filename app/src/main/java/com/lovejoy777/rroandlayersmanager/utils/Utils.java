@@ -140,8 +140,8 @@ public class Utils {
     public static boolean remount(String mountType, String location) {
         if (!isRootAvailable()) return false;
 
-        CommandOutput out = runCommand("mount -o remount,"
-                + mountType + " " + location + "\n", true);
+        CommandOutput out = runCommand("mount -o "
+                + mountType + ",remount " + location + "\n", true);
 
         return out != null && out.exitCode == 0;
     }
